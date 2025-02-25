@@ -611,9 +611,10 @@ marginal_effect_gender_zinb_gender_model <- function(model_list,data,model_type,
 #**********************************************
 #****1. reading data
 #**********************************************
-data_first_author_robust <- read.csv(file = '.\\processed_data.csv')
+data_first_author_robust <- read.csv(file = '.\\1_data\\processed_data_demo.csv')
 
-data_first_author_robust_ctr20 <- read.csv(file = '.\\processed_data_ctr20.csv')
+data_first_author_robust_ctr20 <- read.csv(file = '.\\1_data\\processed_data_ctr20_demo.csv')
+
 
 ctr20<-unique(data_first_author_robust_ctr20$most_ctr)
 
