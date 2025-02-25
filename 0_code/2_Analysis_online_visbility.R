@@ -11,7 +11,7 @@ install_and_load <- function(packages) {
   }
 }
 
-## survival analysis
+
 required_packages <- c("tidyverse","sjPlot","lme4", "dplyr", "car", "glmmTMB", "ggtext")
 install_and_load(required_packages)
 
