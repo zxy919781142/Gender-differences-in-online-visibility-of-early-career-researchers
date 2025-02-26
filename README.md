@@ -58,11 +58,20 @@ install_and_load(required_packages)
 ```
 # Expected figures
 
-Here we share the figures 1-4 in the main manuscript. All figures, including these and the Supplementary Information (SI) figures are available in the `results` folder.
+Here we share the figures 1-5 in the main manuscript. All figures, including these and the Supplementary Information (SI) figures are available in the `2_results` folder.
 
-## Figure 1: Subnational net migration rates (NMRs) per 1,000 scholars (using GeoNames admin-1), worldwide (top) and for Europe (bottom).
-![](./_publication_figures/FIG1_A.png)
+## Figure 1: Predicted counts of Twitter mentions on early-career female and male researchers’ first publications.
+![](./2_result/Fig1_Predicted_counts_of_Twitter_mentions_overall.pdf)
 
+## Figure 2: Predicted counts of Twitter mentions on early-career female and male researchers’ first publications by discipline.
+![](./2_result/Fig2_Predicted_counts_of_Twitter_mentions_discipline.pdf)
 
->[!NOTE]
->**The paper is currently under review for publication in an international journal, the aggregated version of the data (in-line with the data provider's license terms) and more steps for data processing and modeling that allow for replication of our analysis on the Open Science Framework (OSF) will be deposited for public access upon acceptance for publication.**
+## Figure 3: Predicted probabilities of early-career female and male researchers self-promoting their first publications.
+![](./2_result/Fig3_Predicted_probabilities_of_self_promotion_overall.pdf)
+
+## Figure 4: Predicted probabilities of early-career female and male researchers self-promoting their first publications by discipline.
+![](./2_result/Fig4_Predicted_probabilities_of_self_promotion_disciplne.pdf)
+
+## Figure 5: Average marginal effects of online visibility on the five-year cumulative discipline-normalized citation scores (DNCS) among early-career female and male researchers..
+![](./2_result/Fig5_AME_online_visibility.pdf)
+
