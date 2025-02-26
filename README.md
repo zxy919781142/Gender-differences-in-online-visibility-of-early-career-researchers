@@ -61,17 +61,17 @@ install_and_load(required_packages)
 Here we share the figures 1-5 in the main manuscript. All figures, including these and the Supplementary Information (SI) figures are available in the `2_results` folder.
 
 ## Figure 1: Predicted counts of Twitter mentions on early-career female and male researchers’ first publications.
-![](./Fig1_Predicted_counts_of_Twitter_mentions_overall.png)
+![](./2-result/png/Fig1_Predicted_counts_of_Twitter_mentions_overall.png)
 
 ## Figure 2: Predicted counts of Twitter mentions on early-career female and male researchers’ first publications by discipline.
-![](./Fig2_Predicted_counts_of_Twitter_mentions_discipline.png)
+![](./2-result/png/Fig2_Predicted_counts_of_Twitter_mentions_discipline.png)
 
 ## Figure 3: Predicted probabilities of early-career female and male researchers self-promoting their first publications.
-![](./Fig3_Predicted_probabilities_of_self_promotion_overall.png)
+![](./2-result/png/Fig3_Predicted_probabilities_of_self_promotion_overall.png)
 
 ## Figure 4: Predicted probabilities of early-career female and male researchers self-promoting their first publications by discipline.
-![](./Fig4_Predicted_probabilities_of_self_promotion_disciplne.png)
+![](./2-result/png/Fig4_Predicted_probabilities_of_self_promotion_disciplne.png)
 
 ## Figure 5: Average marginal effects of online visibility on the five-year cumulative discipline-normalized citation scores (DNCS) among early-career female and male researchers..
-![](./Fig5_AME_online_visibility.png)
+![](./2-result/png/Fig5_AME_online_visibility.png)
 
