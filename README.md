@@ -17,6 +17,11 @@
 
 **Email2**: xinyi.zhao@st-hughs.ox.ac.uk
 
+## Demo data
+
+We prepared two demo datasets for the replication of our data analysis. Considering the licensed information from Scopus, we made the fake author_id and doi in the dataset. 
+
+
 ## Python requirements
 
 For the reproducible pipeline to recreate the paper's replication data and migration measures, a conda environment with Python 3 (3.11.9 was used here) is needed. 
