@@ -20,28 +20,28 @@ The repository provides demonstration/replication data and R scripts to reproduc
 
 ```text
 .
-├── Data/
-│   ├── 01_dataset.csv
+├── 0_code/
+│   ├── 00_prepare_replication_data.R
+│   ├── 01_correlation.R
+│   ├── 03_online_mentions_models_figures.R
+│   ├── 04_self_promotion_models_figures.R
+│   ├── 05_matching_citation_analysis.R
+│
+├── 1_data/
+│   ├── 01_dataset_demo.csv
 │   ├── 00_field_discipline_OECD_author.csv
 │   ├── corr.csv
 │   ├── corr_agg.csv
-│   ├── 1_sample_2_testresult.csv
-│   ├── 2_gender_ratio_threshold.csv
 │   ├── 1_author_12_16_psm_TW_No.csv
 │   ├── 1_author_12_16_psm_self_other.csv
 │   ├── 2_match_psm_TW_No
 │   └── 2_match_psm_self_other.csv
 │
-├── Result/
+├── 2_Result/
 │   ├── Figures/
 │   ├── Tables/
 │   └── Models/
-│
-├── 00_prepare_replication_data.R
-├── 01_correlation.R
-├── 03_online_mentions_models_figures.R
-├── 04_self_promotion_models_figures.R
-├── 05_matching_citation_analysis.R
+│ 
 └── README.md
 ```
 
@@ -65,8 +65,10 @@ source("00_prepare_replication_data.R")
 
 **Inputs**
 
-- `Data/01_dataset.csv`
+- `Data/01_datase_demo.csv`
+  - Demonstration dataset containing a random sample of 5,000 early-career researchers. To comply with Scopus licensing and data-sharing restrictions, author identifiers have been randomized and selected variables have been anonymized or modified while preserving the data structure required to reproduce the   analytical workflow.
 - `Data/00_field_discipline_OECD_author.csv`
+  - OECD discipline classification used to assign researchers to research fields.
 
 **Outputs**
 
@@ -90,8 +92,6 @@ This script reproduces **Main Figure 1** and Supplementary Figures **S1-S7**.
 
 - `Data/corr.csv`
 - `Data/corr_agg.csv`
-- `Data/1_sample_2_testresult.csv`
-- `Data/2_gender_ratio_threshold.csv`
 
 **Outputs**
 
@@ -112,23 +112,13 @@ This script reproduces the online-visibility analyses for Twitter/X mentions, in
 
 - `Result/01_dataset_processed.csv`
 
-**Optional input**
-
-- `Data/00_field_discipline_OECD_author.csv`
 
 **Outputs**
 
-- `Result/Figures/Fig2_ab_online_mentions.pdf`
-- `Result/Figures/Fig2_c_online_mentions_discipline.pdf`
-- `Result/Figures/Fig_S10_online_mentions_by_model.pdf`
-- `Result/Figures/Fig_S11_online_mentions_by_country.pdf`
-- `Result/Tables/online_mentions_model_predictions.csv`
-- `Result/Tables/online_mentions_subgroup_marginal_effects.csv`
-- `Result/Tables/online_mentions_country_predictions.csv`
-- `Result/Tables/online_mentions_zinb_coefficients.csv`
-- `Result/Tables/online_mentions_zero_inflation_OR.csv`
-- `Result/Tables/online_mentions_count_component_IRR.csv`
-- `Result/Models/online_mentions_zinb_models.rds`
+- `Result/Figures/Fig2_ab.pdf`
+- `Result/Figures/Fig2_c.pdf`
+- `Result/Figures/Fig_s10.pdf`
+- `Result/Figures/Fig_s11.pdf`
 
 ---
 
@@ -142,7 +132,7 @@ This script reproduces the self-promotion analyses, including **Main Figure 3** 
 
 **Input**
 
-- `Result/5_author_12_16_f_fauthor_oct2024_robust_coauthor_soc_coaCiteAge_processedR_2025.csv`
+- `Result/01_dataset_processed.csv`
 
 **Optional input**
 
@@ -150,15 +140,10 @@ This script reproduces the self-promotion analyses, including **Main Figure 3** 
 
 **Outputs**
 
-- `Result/Figures/Fig3_ab_self_promotion.pdf`
-- `Result/Figures/Fig3_c_self_promotion_discipline.pdf`
-- `Result/Figures/Fig_S12_self_promotion_by_model.pdf`
-- `Result/Figures/Fig_S13_self_promotion_by_country.pdf`
-- `Result/Tables/self_promotion_model_predictions.csv`
-- `Result/Tables/self_promotion_subgroup_marginal_effects.csv`
-- `Result/Tables/self_promotion_country_predictions.csv`
-- `Result/Tables/self_promotion_logistic_coefficients_OR.csv`
-- `Result/Models/self_promotion_logistic_models.rds`
+- `Result/Figures/Fig3_ab.pdf`
+- `Result/Figures/Fig3_c.pdf`
+- `Result/Figures/Fig_S12.pdf`
+- `Result/Figures/Fig_S13.pdf`
 
 ---
 
@@ -181,20 +166,12 @@ By default, `RUN_MATCHING <- FALSE`, so the script uses the already matched data
 
 **Outputs**
 
-- `Result/Figures/Fig4_matching_citation_impact.pdf`
-- `Result/Figures/Fig4_matching_citation_impact.png`
-- `Result/Figures/Fig_S17_twitter_mentions_subgroups.pdf`
-- `Result/Figures/Fig_S18_twitter_mentions_discipline.pdf`
-- `Result/Figures/Fig_S21_self_promotion_subgroups.pdf`
-- `Result/Figures/Fig_S22_self_promotion_discipline.pdf`
-- `Result/Tables/Fig4a_matching1_twitter_overall_AMEs.csv`
-- `Result/Tables/Fig4b_matching2_self_overall_AMEs.csv`
-- `Result/Tables/Fig_S17_S18_twitter_AMEs_without_coauthor_citations.csv`
-- `Result/Tables/Fig_S17_S18_twitter_AMEs_with_coauthor_citations.csv`
-- `Result/Tables/Fig_S21_S22_self_AMEs_without_coauthor_citations.csv`
-- `Result/Tables/Fig_S21_S22_self_AMEs_with_coauthor_citations.csv`
-- `Result/Models/matching1_twitter_lm_models.rds`
-- `Result/Models/matching2_self_promotion_lm_models.rds`
+- `Result/Figures/Fig4.pdf`
+- `Result/Figures/Fig_S17.pdf`
+- `Result/Figures/Fig_S18.pdf`
+- `Result/Figures/Fig_S21.pdf`
+- `Result/Figures/Fig_S22.pdf`
+
 
 ---
 
