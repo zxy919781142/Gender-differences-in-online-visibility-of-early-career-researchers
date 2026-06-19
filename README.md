@@ -38,9 +38,7 @@ The repository provides demonstration/replication data and R scripts to reproduc
 │   └── 2_match_psm_self_other.csv
 │
 ├── 2_Result/
-│   ├── Figures/
-│   ├── Tables/
-│   └── Models/
+│   ├── png
 │ 
 └── README.md
 ```
