@@ -237,6 +237,9 @@ All scripts use relative paths and should be run from the repository root. Input
 
 ## Citation
 
-If you use these replication materials, please cite the corresponding manuscript:
+If you use these replication materials, please cite the associated manuscript:
 
 Zhao, X., Akbaritabar, A., Kashyap, R., & Zagheni, E. *Gender differences in online visibility of early-career researchers*.
+
+Please also cite the archived GitHub/Zenodo repository associated with this project:
+**DOI: 10.5281/zenodo.20773808**.
