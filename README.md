@@ -12,9 +12,9 @@ It provides de-identified demonstration data and the full code (R scripts and Py
 
 **Maintainer:** Xinyi Zhao  
 **ORCID:** 0000-0002-2552-7795  
-**Affiliations:** Max Planck Institute for Demographic Research; Leverhulme Centre for Demographic Science, Department of Sociology, University of Oxford  
-**Website:** https://www.demogr.mpg.de/en/about_us_6113/staff_directory_1899/xinyi_zhao_4083/  
-**Email:** zhao@demogr.mpg.de; xinyi.zhao@st-hughs.ox.ac.uk
+**Affiliations:** Max Planck Institute for Human Development; Max Planck Institute for Demographic Research  
+**Website:** https://zxy919781142.github.io/  
+**Email:** zhao@demogr.mpg.de
 
 ---
 
