@@ -1,0 +1,5 @@
+Gender,Tag type,N,Mean,SD,Median,IQR,Min,Max
+female,at_tag,1993,0.728,1.309,0.0,"[0, 1]",0,12
+female,hash_tag,1993,0.768,1.369,0.0,"[0, 1]",0,14
+male,at_tag,3419,0.749,1.954,0.0,"[0, 1]",0,50
+male,hash_tag,3419,0.609,1.311,0.0,"[0, 1]",0,19
