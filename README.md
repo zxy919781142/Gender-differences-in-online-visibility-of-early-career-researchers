@@ -8,13 +8,15 @@ This repository contains the replication materials for the manuscript:
 >
 > Zhao, X., Akbaritabar, A., Kashyap, R., & Zagheni, E.
 
-It provides de-identified demonstration data and the full code (R scripts and Python notebooks) used to produce every main and supplementary figure and table in the manuscript. Each figure is saved together with a source-data table of the same name.
+It provides de-identified demonstration data, the source data for every figure
+and table, and the full code (R scripts and Python notebooks) used to produce
+all main and supplementary figures and tables.
 
 **Maintainer:** Xinyi Zhao  
 **ORCID:** 0000-0002-2552-7795  
-**Affiliations:** Max Planck Institute for Human Development; Max Planck Institute for Demographic Research  
-**Website:** https://zxy919781142.github.io/  
-**Email:** zhao@demogr.mpg.de
+**Affiliations:** Max Planck Institute for Demographic Research; Leverhulme Centre for Demographic Science, Department of Sociology, University of Oxford  
+**Website:** https://www.demogr.mpg.de/en/about_us_6113/staff_directory_1899/xinyi_zhao_4083/  
+**Email:** zhao@demogr.mpg.de; xinyi.zhao@st-hughs.ox.ac.uk
 
 ---
 
@@ -22,192 +24,211 @@ It provides de-identified demonstration data and the full code (R scripts and Py
 
 ```text
 .
-├── 0_code/
-│   ├── 1_Data_Processing_new.ipynb          # data collection: Scopus sample, Altmetric, Twitter API
-│   ├── 2_self_promotion_new.ipynb           # name matching -> self-promotion flag
-│   ├── 01_correlation.R                     # Fig. 1, Figs. S1-S3, S5-S7, Tables S3-S6
-│   ├── 02_online_mentions_models_figure.R   # Fig. 2, Figs. S10-S11, Tables S7-S8
-│   ├── 03_self_promotion_models_figures.R   # Fig. 3, Figs. S12-S15, Table S10
-│   ├── 04a_run_matching.R                   # propensity-score matching, Figs. S16, S20
-│   ├── 04b_matching_regression_figures.R    # Fig. 4, Figs. S17-S19, S21-S22, Tables S14-S15
-│   ├── SI_robustness_gender_ratio.ipynb     # threshold sweep (Fig. S9 input) + validation sample
-│   ├── SI_robustness_gpt_validation.ipynb   # LLM-assisted validation (Fig. S8 input)
-│   ├── SI_robustness_S8_S9.R                # Figs. S8-S9
-│   ├── SI_matching_test.R                   # Tables S12-S13 (balance tests)
-│   └── SI_Tweet_Text_cleaned.ipynb          # Figs. S23-S26, Tables S16-S17 (tweet text)
+├── code/
+│   ├── data_preparation/
+│   │   ├── 1_Data_Processing_new.ipynb       # early-career sample; Altmetric and Twitter data
+│   │   └── 2_self_promotion_new.ipynb        # author-tweeter name matching (self-promotion)
+│   ├── 01_correlation.R                      # Fig. 1; Figs. S1-S3, S5-S7; Tables S3-S6
+│   ├── 02_online_mentions_models_figure.R    # Fig. 2; Figs. S10-S11; Tables S7-S8
+│   ├── 03_self_promotion_models_figures.R    # Fig. 3; Figs. S12-S15; Table S10
+│   ├── 04a_run_matching.R                    # propensity-score matching; Figs. S16, S20
+│   ├── 04b_matching_regression_figures.R     # Fig. 4; Figs. S17-S19, S21-S22; Tables S14-S15
+│   ├── SI_matching_test.R                    # Tables S12-S13 (balance tests)
+│   ├── SI_robustness_gpt_validation.ipynb    # validation of the name-matching thresholds (Fig. S8 input)
+│   ├── SI_robustness_S8_S9.R                 # Figs. S8-S9
+│   ├── SI_Tweet_Text_cleaned.ipynb           # Figs. S23-S26; Tables S16-S17
+│   └── py/                                   # sentiment classifiers used by SI_Tweet_Text_cleaned.ipynb
 │
-├── 1_data/                                  # input data (demo versions)
-│
-├── 2_result/                                # intermediate files (processed data, matched data, models)
-│
-├── figures/                                 # every figure (PDF), named fig_1.pdf ... fig_s26.pdf
-│   └── png/                                 # PNG previews of the main figures (shown below)
-│
-├── tables/                                  # source data for every figure + supplementary tables
-│
+├── data/                                     # input data (de-identified demo versions)
+├── result/                                   # intermediate files created by the code
+├── figures/                                  # all figures (PDF); figures/png/ holds previews
+├── tables/                                   # source data of all figures + all tables (CSV)
 └── README.md
 ```
 
 ---
 
-## Output naming
-
-Every figure in `figures/` has a source-data table with the same name in `tables/`, so each plotted value can be traced:
-
-| Figure | Source data |
-|---|---|
-| `figures/fig_1.pdf` | `tables/fig_1.csv` (+ `fig_1_correlation.csv`) |
-| `figures/fig_2ab.pdf`, `fig_2c.pdf` | `tables/fig_2ab.csv`, `fig_2c.csv` |
-| `figures/fig_3ab.pdf`, `fig_3c.pdf` | `tables/fig_3ab.csv`, `fig_3c.csv` |
-| `figures/fig_4.pdf` | `tables/fig_4.csv` |
-| `figures/fig_s1.pdf` ... `fig_s26.pdf` | `tables/fig_s1.csv` ... `fig_s26.csv` |
-
-Notes:
-
-- Where a figure combines panels (e.g. `fig_2ab`), its table contains all panels, identified by a `fig_panel` column.
-- Figs. S2 and S6 are drawn from the same country-level data, so they share `tables/fig_s2_s6.csv` (and `fig_s2_s6_correlation.csv`). Likewise, Figs. S3 and S7 share `tables/fig_s3_s7.csv`.
-- Figs. S23 and S25 consist of separate female and male panels: `fig_s23_female` / `fig_s23_male` and `fig_s25_female` / `fig_s25_male`, in both `figures/` and `tables/`.
-- Figs. S24 and S26 have an additional `*_summary.csv` with descriptive statistics of the tag distributions.
-- Fig. S4 is a schematic of the name-matching workflow and is not generated by code.
-- Supplementary tables are saved in `tables/` as `table_s1.csv` ... `table_s17.csv` (no suffix). A `table_sN.csv` is always the Supplementary Table N itself; the source data of Supplementary Figure N is always `fig_sN.csv`.
-
----
-
 ## Data
 
-The original bibliometric and social-media data cannot be redistributed:
+The original data cannot be redistributed:
 
-- **Scopus** publication and author data are subject to licensing restrictions.
-- **Altmetric** mention data were obtained under licences held separately by the Max Planck Institute for Demographic Research and the University of Oxford.
-- **Twitter/X** data (tweet text, timestamps, and user profiles) were collected via the Twitter Academic API before April 2023.
+- **Scopus** bibliometric data were obtained through the German Competence
+  Network for Bibliometrics and are subject to commercial licensing.
+- **Altmetric** data were obtained under institutional licences held by the
+  Max Planck Institute for Demographic Research and the University of Oxford.
+- **Twitter/X** data (tweets, display names, handles) were collected through the
+  Twitter Academic API before April 2023 and cannot be shared under the
+  platform's terms of service.
 
-To support reproducibility, `1_data/` contains demonstration data that follow the structure used in the analysis. The demo data cover a random sample of early-career researchers; author identifiers and DOIs are anonymised or replaced with synthetic values, and selected variables are modified while preserving the structure required to run the full workflow. Results obtained from the demo data will therefore differ from those reported in the manuscript.
+The `data/` folder therefore contains de-identified demonstration data that
+follow the structure used in the analysis: author identifiers and DOIs are
+replaced by random values (DOIs take the form `10.1000/anon…`). Results
+obtained from the demo data differ from those reported in the manuscript.
+The values shown in the published figures and tables are provided in
+`tables/` (see *Outputs* below).
+
+| File | Content | Used by |
+|---|---|---|
+| `0_paper_full_sample.csv` | publications of a sample of authors (author, gender, discipline, DOI, publication year) | `1_Data_Processing_new.ipynb` |
+| `00_openalex_tweeterid_name_processed.pkl` | OpenAlex author names linked to Twitter user IDs (Mongeon, Bowman & Costas, 2023) | `2_self_promotion_new.ipynb` |
+| `1_dataset_demo.csv` | author-level analysis dataset (random sample of early-career researchers) | `02`, `03` |
+| `3_corr.csv`, `3_corr_agg.csv` | country-level numbers of female and male researchers (all, online-visible, self-promoting), by cohort and pooled, with the Gender Inequality Index | `01_correlation.R` |
+| `4_TW_text_demo.csv` | sample of tweets mentioning the publications | `SI_Tweet_Text_cleaned.ipynb` |
+| `5_gender_ratio_threshold.csv` | female-to-male ratio of self-promoting researchers for each pair of name-similarity thresholds | `SI_robustness_S8_S9.R` |
 
 ---
 
 ## How to reproduce the analyses
 
-Run all scripts **from the repository root**, so that the relative paths (`1_data/`, `2_result/`, `figures/`, `tables/`) resolve correctly. Output folders are created automatically.
+Run all scripts **from the repository root**, e.g. `source("code/01_correlation.R")`
+in R, or open Jupyter in the repository root. Output folders are created
+automatically. Fitted models are cached in `result/` (`*.rds`); delete them to
+refit the models.
 
-### Step 0 (optional). Data collection and self-promotion identification — Python
+### Step 0 (optional). Data preparation -- Python
 
-These notebooks document how the analytical dataset was built. They require the full licensed data and API credentials, and are **not needed** to reproduce the figures from the demo data.
+These notebooks document how the analysis data were built. They require API
+access (Altmetric, Twitter) and real author and Twitter names, and are **not
+needed** to reproduce the figures from the demo data.
 
-| Notebook | Purpose |
-|---|---|
-| `1_Data_Processing_new.ipynb` | Selects each author's first publication (2012–2016 cohorts) and their early-career publications; queries the Altmetric API for original tweets; queries the Twitter API for tweet text and tweeter identity. |
-| `2_self_promotion_new.ipynb` | Matches author names to the names and handles of Twitter users who tweeted the publication's DOI, and flags self-promotion (similarity thresholds: 0.6 in general, 0.8 for Chinese names). |
+| Notebook | Input | Output |
+|---|---|---|
+| `data_preparation/1_Data_Processing_new.ipynb` | `data/0_paper_full_sample.csv` | `result/0_author_doi_3y_2012_2016_sample.csv`, `result/1_doi_3y_2012_2016_tweet_sample.pkl` |
+| `data_preparation/2_self_promotion_new.ipynb` | the two outputs above; `data/00_openalex_tweeterid_name_processed.pkl` | `result/2_self_promotion_scores_sample.csv` |
 
-API keys are read from environment variables (`ALTMETRIC_API_KEY`, `TWITTER_BEARER_TOKEN`, `TWITTER_API_KEY`, `TWITTER_API_SECRET`, `TWITTER_ACCESS_TOKEN`, `TWITTER_ACCESS_SECRET`) and are never stored in the code.
+The first notebook selects each author's first publication in 2012--2016 and
+their publications in the first three career years, and queries the Altmetric
+API for original tweets. The second compares author names with the names and
+handles of the Twitter users who tweeted each publication and computes
+name-similarity scores (thresholds: 0.6 in general, 0.8 for Chinese names).
+The resulting self-promotion indicator is part of `data/1_dataset_demo.csv`.
 
-### Step 1. Country-level correlations — `01_correlation.R`
+API keys are read from environment variables (`ALTMETRIC_API_KEY`,
+`TWITTER_BEARER_TOKEN`, `TWITTER_API_KEY`, `TWITTER_API_SECRET`,
+`TWITTER_ACCESS_TOKEN`, `TWITTER_ACCESS_SECRET`) and are never stored in the code.
 
-```r
-source("0_code/01_correlation.R")
-```
+### Step 1. Country-level correlations -- `01_correlation.R`
 
-- **Inputs:** `1_data/01_corr.csv` (country × cohort), `1_data/01_corr_agg.csv` (country, cohorts pooled)
+- **Input:** `data/3_corr.csv`, `data/3_corr_agg.csv`
 - **Figures:** `fig_1`, `fig_s1`, `fig_s2`, `fig_s3`, `fig_s5`, `fig_s6`, `fig_s7`
-- **Tables:** matching source data, plus `table_s3.csv`–`table_s6.csv` (correlations by cohort)
+- **Tables:** their source data; `table_s3`--`table_s6`
 
-### Step 2. Online-visibility models — `02_online_mentions_models_figure.R`
+### Step 2. Online-visibility models -- `02_online_mentions_models_figure.R`
 
-```r
-source("0_code/02_online_mentions_models_figure.R")
-```
+Zero-inflated negative binomial models of Twitter mention counts (Models 0--9).
 
-Fits zero-inflated negative binomial (ZINB) models of Twitter/X mention counts (Models 0–9).
-
-- **Input:** `1_data/dataset_demo.csv`
-- **Intermediate output:** `2_result/dataset_demo_processed.csv` (used by Steps 3 and 4), `2_result/online_mentions_zinb_models.rds`
+- **Input:** `data/1_dataset_demo.csv`
+- **Intermediate output:** `result/dataset_demo_processed.csv` (used in Step 4)
 - **Figures:** `fig_2ab`, `fig_2c`, `fig_s10`, `fig_s11`
-- **Tables:** matching source data, plus `table_s7.csv` (zero-inflation ORs) and `table_s8.csv` (count-component IRRs)
+- **Tables:** their source data; `table_s7`, `table_s8`
 
-### Step 3. Self-promotion models — `03_self_promotion_models_figures.R`
+On the small demo sample, some models cannot be estimated by REML; they are
+then refitted by maximum likelihood and a message is printed.
 
-```r
-source("0_code/03_self_promotion_models_figures.R")
-```
+### Step 3. Self-promotion models -- `03_self_promotion_models_figures.R`
 
-Fits logistic models of self-promotion (Models 0–10) and of promotion by co-authors and by official accounts.
+Logistic models of self-promotion (Models 0--10) and of promotion by co-authors
+and official accounts.
 
-- **Input:** `2_result/dataset_demo_processed.csv` (from Step 2)
-- **Figures:** `fig_3ab`, `fig_3c`, `fig_s12`, `fig_s13`, `fig_s14`, `fig_s15`
-- **Tables:** matching source data, plus `table_s10.csv` (self-promotion ORs)
+- **Input:** `data/1_dataset_demo.csv`
+- **Figures:** `fig_3ab`, `fig_3c`, `fig_s12`--`fig_s15`
+- **Tables:** their source data; `table_s10`
 
-### Step 4. Matching and citation impact — `04a_run_matching.R`, then `04b_matching_regression_figures.R`
+### Step 4. Matching and citation impact -- `04a_run_matching.R`, then `04b_matching_regression_figures.R`
 
-```r
-source("0_code/04a_run_matching.R")
-source("0_code/04b_matching_regression_figures.R")
-```
+`04a` runs the propensity-score matching (*Matching 1*: Twitter mentions vs.
+none; exactly one mention vs. none for the robustness check in Fig. S19;
+*Matching 2*: self-promotion vs. mentions by others only). `04b` estimates the
+association of online visibility and self-promotion with five-year
+discipline-normalized citation scores (DNCS⁵) on the matched samples.
 
-`04a` runs the propensity-score matching (Matching 1: Twitter mentions vs. no mentions; Matching 2: self-promotion vs. others' promotion only). `04b` fits the citation-impact regressions on the matched data. The matching step is slow, so it is kept separate: once `04a` has run, `04b` can be re-run on its own.
+- **Input (04a):** `result/dataset_demo_processed.csv` (from Step 2)
+- **Intermediate output (04a):** `result/2_match_psm_TW_No.csv`,
+  `result/2_match_psm_TW_No_onemention.csv`, `result/2_match_psm_self_other.csv`
+- **Figures:** `fig_s16`, `fig_s20` (04a); `fig_4`, `fig_s17`--`fig_s19`, `fig_s21`, `fig_s22` (04b)
+- **Tables:** their source data; `table_s14`, `table_s15`
 
-- **Input (04a):** `2_result/dataset_demo_processed.csv` (from Step 2)
-- **Intermediate output (04a):** `2_result/2_match_psm_TW_No`, `2_result/2_match_psm_self_other.csv`
-- **Additional input (04b):** `2_result/2_match_psm_TW_No_basic_fncr_exNan_nov2024_1121_selfdiscipline_subclass.csv` — the matched sample for the exactly-one-mention robustness check (Fig. S19)
-- **Figures:** `fig_s16`, `fig_s20` (04a: covariate balance); `fig_4`, `fig_s17`, `fig_s18`, `fig_s19`, `fig_s21`, `fig_s22` (04b)
-- **Tables:** matching source data, `table_s14.csv` and `table_s15.csv` (AMEs for Matching 1 and 2, the estimates shown in Fig. 4a/4b), balance tables of the matching step, and cluster-robust regression tables
+### Step 5. Balance tests -- `SI_matching_test.R`
 
-### Step 5. Robustness of the name-matching thresholds — Figs. S8–S9
+- **Input:** the matched samples from Step 4
+- **Tables:** `table_s12`, `table_s13`
 
-Run in this order:
+### Step 6. Robustness of the name-matching thresholds -- Figs. S8--S9
 
-1. `SI_robustness_gender_ratio.ipynb` — sweeps pairs of similarity thresholds and computes the female-to-male ratio of self-promoting researchers (Fig. S9 input); draws the validation sample.
-2. `SI_robustness_gpt_validation.ipynb` — judges each sampled match with an LLM, applies the manual review, and computes precision/recall/F1 per threshold pair (Fig. S8 input). Requires the environment variable `GWDG_API_KEY`.
-3. `SI_robustness_S8_S9.R` — draws `fig_s8` and `fig_s9` and writes their source data.
+1. `SI_robustness_gpt_validation.ipynb` -- an LLM judges 100 borderline
+   author-tweeter name matches, disagreements with the algorithm are reviewed
+   manually, and precision, recall and F1 are computed for each pair of
+   thresholds. This step uses real author and Twitter names and an API key
+   (`GWDG_API_KEY`); its input sample is therefore not shared. Its output,
+   `result/5_name_match_validation_sample_testresult.csv`, is provided.
+2. `SI_robustness_S8_S9.R` -- draws Figs. S8 and S9.
+   - **Input:** `result/5_name_match_validation_sample_testresult.csv`,
+     `data/5_gender_ratio_threshold.csv`
+   - **Figures:** `fig_s8`, `fig_s9`; **Tables:** their source data
 
-These steps require the name-matching scores from Step 0 and therefore the full data.
+### Step 7. Tweet text analysis -- `SI_Tweet_Text_cleaned.ipynb`
 
-### Step 6. Tweet text analysis — `SI_Tweet_Text_cleaned.ipynb`
+Sentiment of tweets (majority vote of three classifiers), word use and tags.
 
-Classifies the sentiment of tweets (majority vote of three classifiers) and analyses their wording and use of tags.
-
-- **Input:** `1_data/clean_for_Git/TW_text.csv`
-- **External dependency:** the modules `Py/nlp_test.py` and `Py/sentiment_analysis.py` and their pre-trained model files (`1_data/Py/`)
+- **Input:** `data/4_TW_text_demo.csv`; classifiers in `code/py/`
 - **Figures:** `fig_s23_female`, `fig_s23_male`, `fig_s24`, `fig_s25_female`, `fig_s25_male`, `fig_s26`
-- **Tables:** matching source data, plus `table_s16.csv` and `table_s17.csv` (sentiment by gender)
+- **Tables:** their source data; `table_s16`, `table_s17`
 
-### Balance tests — `SI_matching_test.R`
+Requires internet access to download the BERTweet model (Hugging Face) and
+NLTK corpora.
 
-Re-matches the Step 4 samples with additional exact-matching criteria and writes the covariate-balance tables for the top 20 countries: `table_s12.csv` (Matching 1) and `table_s13.csv` (Matching 2), plus `matching_test_1_TW_balance_tests.csv`. Run after `04a_run_matching.R`.
+---
+
+## Outputs
+
+Every figure in `figures/` has a source-data table with the same name in
+`tables/`, containing the values plotted (e.g. `figures/fig_2ab.pdf` and
+`tables/fig_2ab.csv`). Panels combined in one figure file are identified by a
+`fig_panel` column. Figures S2/S6 and S3/S7 are drawn from the same data and
+share one table each (`fig_s2_s6.csv`, `fig_s3_s7.csv`). Fig. S4 is a schematic
+of the name-matching workflow and has no source data.
+
+All tables of the manuscript and Supplementary Information are provided in
+`tables/` as `table_1.csv` and `table_s1.csv`--`table_s17.csv`. Tables S3--S8,
+S10 and S12--S17 are written by the code; Tables 1, S1, S2a, S2b, S9 and S11
+are provided as they appear in the manuscript.
+
+The same files are provided as the *Source Data* file of the article.
 
 ---
 
 ## Main figures
 
 ### Figure 1
-
-Cross-national association between the female-to-male ratios of all early-career researchers and those of (a) online-visible researchers and (b) self-promoting researchers.
-
-Produced by: `01_correlation.R`
+Cross-national association between the female-to-male ratios of all
+early-career researchers and those of (a) online-visible and (b)
+self-promoting researchers. Produced by `01_correlation.R`.
 
 ![](./figures/png/fig_1.png)
 
 ### Figure 2
-
-Predicted counts of Twitter/X mentions of early-career female and male researchers' first publications: overall, and by cohort, previous publications, journal rank, and discipline.
-
-Produced by: `02_online_mentions_models_figure.R`
+Predicted counts of Twitter mentions of early-career female and male
+researchers' first publications: overall, and by cohort, previous
+publications, journal rank and discipline. Produced by
+`02_online_mentions_models_figure.R`.
 
 ![](./figures/png/fig_2ab.png)
 ![](./figures/png/fig_2c.png)
 
 ### Figure 3
-
-Predicted probabilities of early-career female and male researchers self-promoting their first publications: overall, and by cohort, previous publications, journal rank, and discipline.
-
-Produced by: `03_self_promotion_models_figures.R`
+Predicted probabilities of early-career female and male researchers
+self-promoting their first publications: overall, and by cohort, previous
+publications, journal rank and discipline. Produced by
+`03_self_promotion_models_figures.R`.
 
 ![](./figures/png/fig_3ab.png)
 ![](./figures/png/fig_3c.png)
 
 ### Figure 4
-
-Average marginal effects of online visibility and self-promotion on five-year cumulative discipline-normalized citation scores (DNCS⁵) among early-career female and male researchers.
-
-Produced by: `04b_matching_regression_figures.R`
+Average marginal effects of online visibility and self-promotion on the
+five-year cumulative discipline-normalized citation scores (DNCS⁵) of
+early-career female and male researchers. Produced by
+`04b_matching_regression_figures.R`.
 
 ![](./figures/png/fig_4.png)
 
@@ -217,22 +238,24 @@ Produced by: `04b_matching_regression_figures.R`
 
 ### R
 
-The R scripts check for or install their required packages. Across the pipeline, they use:
-
 ```r
 c(
-  "dplyr", "tidyr", "readr", "purrr", "forcats", "stringr", "tidyverse",
+  "tidyverse", "dplyr", "tidyr", "readr", "purrr", "forcats", "stringr",
   "ggplot2", "ggrepel", "ggtext", "cowplot", "patchwork", "scales",
   "countrycode", "broom", "broom.mixed", "glmmTMB", "effectsize",
-  "MatchIt", "sandwich", "lmtest"
+  "MatchIt", "optmatch", "sandwich", "lmtest"
 )
 ```
 
-The package `ggpattern` is optional; without it, Figure 4 is drawn without hatching.
+`optmatch` is required for the optimal pair matching in `04a_run_matching.R`.
+The package `ggpattern` is optional; without it, Figure 4 is drawn without
+hatching.
 
 ### Python
 
-The notebooks use `pandas`, `numpy`, `matplotlib`, `scipy`, `scikit-learn`, `openai`, `transformers`, `torch`, `wordcloud`, `textblob`, `langid`, and `translate`.
+`pandas`, `numpy`, `matplotlib`, `scipy`, `scikit-learn`, `nltk`,
+`transformers`, `torch`, `wordcloud`, `textblob`, `langid`, `translate`,
+and `openai` (only for `SI_robustness_gpt_validation.ipynb`).
 
 ---
 
@@ -240,7 +263,10 @@ The notebooks use `pandas`, `numpy`, `matplotlib`, `scipy`, `scikit-learn`, `ope
 
 If you use these replication materials, please cite the associated manuscript:
 
-Zhao, X., Akbaritabar, A., Kashyap, R., & Zagheni, E. *Gender differences in online visibility of early-career researchers*.
+Zhao, X., Akbaritabar, A., Kashyap, R., & Zagheni, E. *Gender differences in
+online visibility of early-career researchers*.
 
-Please also cite the archived GitHub/Zenodo repository associated with this project:
-**DOI: 10.5281/zenodo.20773808**
+Please also cite the archived repository:
+**Zhao, X., Akbaritabar, A., Kashyap, R., & Zagheni, E. (2026). Replication
+materials for Gender differences in online visibility of early-career
+researchers. Zenodo. https://doi.org/10.5281/zenodo.20773808**
