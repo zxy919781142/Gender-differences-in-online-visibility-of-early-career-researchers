@@ -5,8 +5,8 @@
 #   Gender differences in online visibility of early-career researchers
 #
 # Input files should be placed in the data/ folder:
-#   data/01_corr.csv      country-by-cohort correlation input data
-#   data/01_corr_agg.csv  country-level pooled 2012-2016 correlation input data
+#   data/3_corr.csv      country-by-cohort correlation input data
+#   data/3_corr_agg.csv  country-level pooled 2012-2016 correlation input data
 #
 
 # Outputs:
@@ -55,8 +55,8 @@ dir.create(FIG_DIR, showWarnings = FALSE, recursive = TRUE)
 dir.create(TABLE_DIR, showWarnings = FALSE, recursive = TRUE)
 
 # Input paths
-corr_file <- file.path(DATA_DIR, "01_corr.csv")
-corr_agg_file <- file.path(DATA_DIR, "01_corr_agg.csv")
+corr_file <- file.path(DATA_DIR, "03_corr.csv")
+corr_agg_file <- file.path(DATA_DIR, "03_corr_agg.csv")
 #threshold_f1_file <- file.path(DATA_DIR, "1_sample_2_testresult.csv")
 #threshold_gender_file <- file.path(DATA_DIR, "2_gender_ratio_threshold.csv")
 

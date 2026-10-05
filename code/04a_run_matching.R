@@ -24,7 +24,7 @@
 #
 #
 # Outputs:
-#   result/2_match_psm_TW_No               (matched data, Matching 1)
+#   result/2_match_psm_TW_No.csv              (matched data, Matching 1)
 #   result/2_match_psm_TW_No_onemention.csv (matched data, exactly one mention vs. none; Fig. S19)
 #   result/2_match_psm_self_other.csv      (matched data, Matching 2)
 #   tables/balance_2_match_psm_TW_No.csv      (numeric balance table, Matching 1)
@@ -346,7 +346,7 @@ matching2_input <- main_data %>%
 
 result_twitter <- run_match(
   data = matching1_input,
-  output_file = "2_match_psm_TW_No",
+  output_file = "2_match_psm_TW_No.csv",
   treatment_formula = Type_int ~ gender + pub_before_cate + cohort + discipline_new + Jr_Quantile +
     most_ctr + colla_ctr_Y + author_cnt + max_coa_fncr_5y_log + firstauthor_top_100,
   exact_formula = ~ gender + cohort + discipline_new + Jr_Quantile + firstauthor_top_100
