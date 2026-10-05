@@ -11,26 +11,16 @@
 # Manuscript:
 #   Gender differences in online visibility of early-career researchers
 #
-# CHANGE FROM ORIGINAL: this script now integrates the data-preparation step
-# (previously a separate 00_prepare_replication_data.R producing an
-# intermediate dataset_demo_processed.csv) directly, so it reads the RAW
-# author-level dataset and derives every column the models need itself. This
-# removes the earlier dependency on a separately-generated file with a
-# filename that had to match exactly (a real mismatch was found between
-# 00's actual output filename and what 03/04 expected -- see conversation
-# history). Now there is one input file, and one script.
-#
+
 # Required input file:
-#   1_data/dataset_demo.csv   (or your full author-level dataset with the
+#   data/1_dataset_demo.csv   (or your full author-level dataset with the
 #   same raw columns: len_tweet, discipline_new_pub, pub_before,
 #   max_coa_fncr_5y, Original_Tweeters, gender, cohort, Jr_Quantile,
 #   colla_ctr_Y, colla_aff_Y, author_cnt, firstauthor_top_100, most_ctr)
 #
 # Outputs:
-#   2_result/dataset_demo_processed.csv   (derived dataset, saved for inspection
-#                                         and for reuse by 04_self_promotion...)
-#   2_result/online_mentions_zinb_models.rds
-#
+#   result/online_mentions_zinb_models.rds
+#   result/dataset_demo_processed.csv
 #   figures/fig_2ab.pdf    tables/fig_2ab.csv   (panels a + b, column fig_panel)
 #   figures/fig_2c.pdf     tables/fig_2c.csv
 #   figures/fig_s10.pdf    tables/fig_s10.csv
@@ -51,17 +41,17 @@ missing_packages <- required_packages[!required_packages %in% rownames(installed
 if (length(missing_packages) > 0) install.packages(missing_packages)
 invisible(lapply(required_packages, library, character.only = TRUE))
 
-data_dir <- "1_data"
-result_dir <- "2_result"
+data_dir <- "data"
+result_dir <- "result"
 figure_dir <- "figures"   # every manuscript figure
 table_dir <- "tables"     # figure source data + supplementary tables
-model_dir <- result_dir   # intermediate files (processed data, fitted models)
+model_dir <- result_dir   # intermediate files (fitted models)
 
 dir.create(figure_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(table_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(model_dir, recursive = TRUE, showWarnings = FALSE)
 
-raw_file <- file.path(data_dir, "dataset_demo.csv")
+raw_file <- file.path(data_dir, "1_dataset_demo.csv")
 
 if (!file.exists(raw_file)) {
   stop("Raw author-level dataset not found: ", raw_file)
@@ -315,10 +305,6 @@ analysis_data <- readr::read_csv(raw_file, show_col_types = FALSE) %>%
   derive_processed_columns() %>%
   prepare_analysis_data()
 
-# Save the derived dataset for inspection and for reuse by
-# 04_self_promotion_models_figures.R (which needs the same derived columns).
-readr::write_csv(analysis_data, file.path(result_dir, "dataset_demo_processed.csv"))
-
 models <- fit_or_load_models(
   analysis_data,
   file.path(model_dir, "online_mentions_zinb_models.rds")
@@ -503,5 +489,5 @@ ggsave(file.path(figure_dir, "fig_2ab.pdf"), combined_fig2_ab, width = 28, heigh
 ggsave(file.path(figure_dir, "fig_2c.pdf"), p_fig2c, width = 28, height = 10, limitsize = FALSE)
 ggsave(file.path(figure_dir, "fig_s10.pdf"), p_s10, width = 18, height = 11, limitsize = FALSE)
 ggsave(file.path(figure_dir, "fig_s11.pdf"), p_s11, width = 21, height = 10, limitsize = FALSE)
-
+readr::write_csv(analysis_data, file.path(result_dir, "dataset_demo_processed.csv"))
 message("Online-mentions analysis complete. Figures in figures/, tables in tables/.")

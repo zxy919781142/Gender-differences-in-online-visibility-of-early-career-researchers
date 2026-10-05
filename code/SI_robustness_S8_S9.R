@@ -10,19 +10,14 @@
 #
 # Manuscript: Gender differences in online visibility of early-career researchers
 #
-# CHANGES FROM THE ORIGINAL CODE:
-#   - Uses relative paths (data_dir/results_dir) instead of a hardcoded
-#     Windows absolute path (which also used single backslashes -- an
-#     escape-character issue in R string literals; see prior discussion).
-#   - Wrapped in a single reusable plotting function (plot_threshold_heatmap)
-#     instead of two near-duplicate ggplot blocks, so the two figures stay
-#     visually consistent and any styling fix only needs to be made once.
-#   - Both scripts now write to `results_dir` instead of a fixed private
-#     network path.
+# Run from the repository root.
 #
 # Required input files:
-#   2_result/1_sample_2_testresult.csv     (from SI_robustness_gpt_validation.ipynb)
-#   2_result/2_gender_ratio_threshold.csv  (from SI_robustness_gender_ratio.ipynb)
+#   result/5_name_match_validation_sample_testresult.csv
+#       precision/recall/F1 per threshold pair (from SI_robustness_gpt_validation.ipynb)
+#   data/5_gender_ratio_threshold.csv
+#       female-to-male ratio of self-promoting researchers per threshold pair
+#       (provided directly as input data)
 #
 # Outputs:
 #   figures/fig_s8.pdf    tables/fig_s8.csv
@@ -32,20 +27,21 @@
 library(dplyr)
 library(ggplot2)
 
-data_dir <- "2_result"
+data_dir <- "data"            # input data provided with the repository
+result_dir <- "result"        # output of SI_robustness_gpt_validation.ipynb
 fig_dir <- "figures"
 table_dir <- "tables"
 dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(table_dir, recursive = TRUE, showWarnings = FALSE)
 
-f1_file <- file.path(data_dir, "1_sample_2_testresult.csv")
-gender_file <- file.path(data_dir, "2_gender_ratio_threshold.csv")
+f1_file <- file.path(result_dir, "5_name_match_validation_sample_testresult.csv")
+gender_file <- file.path(data_dir, "5_gender_ratio_threshold.csv")
 
 if (!file.exists(f1_file)) {
   stop("Required input not found (run SI_robustness_gpt_validation.ipynb first): ", f1_file)
 }
 if (!file.exists(gender_file)) {
-  stop("Required input not found (run SI_robustness_gender_ratio.ipynb first): ", gender_file)
+  stop("Required input not found (provided in the data/ folder): ", gender_file)
 }
 
 f1_data <- readr::read_csv(f1_file, show_col_types = FALSE) %>%

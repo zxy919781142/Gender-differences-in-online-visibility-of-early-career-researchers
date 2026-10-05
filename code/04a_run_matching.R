@@ -16,21 +16,19 @@
 #   re-run every time you tweak the regression/plotting code.
 #
 # Required input file:
-#   2_result/dataset_demo_processed.csv
+#   result/dataset_demo_processed.csv
 #   (produced by 02_online_mentions_models_figure.R -- run that script first)
 #   Must include: cit_5_years, cit_3_years, discipline_average_5y_early,
 #   discipline_average_3y_early (used to compute the DNCS5 citation outcome,
 #   fncr_5_years_early -- see Section 3 below).
 #
-# CHANGE: Matching 1 and Matching 2's PSM input datasets are now derived
-# directly from this one canonical processed file (using the `with_tw` and
-# `self_pro` columns that already exist in it), rather than requiring two
-# separately-provided raw PSM-input files. See Section 4 below.
 #
 # Outputs:
-#   2_result/2_match_psm_TW_No               (matched data, Matching 1)
-#   2_result/2_match_psm_self_other.csv      (matched data, Matching 2)
+#   result/2_match_psm_TW_No               (matched data, Matching 1)
+#   result/2_match_psm_TW_No_onemention.csv (matched data, exactly one mention vs. none; Fig. S19)
+#   result/2_match_psm_self_other.csv      (matched data, Matching 2)
 #   tables/balance_2_match_psm_TW_No.csv      (numeric balance table, Matching 1)
+#   tables/balance_2_match_psm_TW_No_onemention.csv (numeric balance table, one-mention matching)
 #   tables/balance_2_match_psm_self_other.csv (numeric balance table, Matching 2)
 #   figures/fig_s16.pdf    tables/fig_s16.csv  (balance plots, Matching 1)
 #   figures/fig_s20.pdf    tables/fig_s20.csv  (balance plots, Matching 2)
@@ -52,8 +50,8 @@ invisible(lapply(required_packages, library, character.only = TRUE))
 
 set.seed(2026)
 
-DATA_DIR <- "2_result"   # canonical processed dataset lives here (from 02)
-RESULT_DIR <- "2_result" # matched datasets (intermediate, read by 04b)
+DATA_DIR <- "result"   # canonical processed dataset lives here (from 02)
+RESULT_DIR <- "result" # matched datasets (intermediate, read by 04b)
 FIG_DIR <- "figures"     # every manuscript figure
 TAB_DIR <- "tables"      # figure source data + supplementary tables
 for (d in c(RESULT_DIR, FIG_DIR, TAB_DIR)) dir.create(d, recursive = TRUE, showWarnings = FALSE)
@@ -323,6 +321,13 @@ matching1_input <- main_data %>%
     firstauthor_top_100 = ifelse(is.na(firstauthor_top_100), "0", as.character(firstauthor_top_100))
   )
 
+# Matching 1 (robustness, Fig. S19): exactly one Twitter mention vs. no mentions.
+# Same covariates and matching specification as Matching 1; only the treatment
+# group is restricted to researchers whose first publication received exactly
+# one Twitter mention.
+matching1_onemention_input <- matching1_input %>%
+  filter(with_tw == 0 | len_tweet == 1)
+
 # Matching 2: self-promotion (self_pro == 1) vs. others'-promotion-only
 # (self_pro == 0), restricted to researchers who received at least one
 # mention in the first place (with_tw == 1) -- self-promotion is only a
@@ -342,6 +347,14 @@ matching2_input <- main_data %>%
 result_twitter <- run_match(
   data = matching1_input,
   output_file = "2_match_psm_TW_No",
+  treatment_formula = Type_int ~ gender + pub_before_cate + cohort + discipline_new + Jr_Quantile +
+    most_ctr + colla_ctr_Y + author_cnt + max_coa_fncr_5y_log + firstauthor_top_100,
+  exact_formula = ~ gender + cohort + discipline_new + Jr_Quantile + firstauthor_top_100
+)
+
+result_twitter_onemention <- run_match(
+  data = matching1_onemention_input,
+  output_file = "2_match_psm_TW_No_onemention.csv",
   treatment_formula = Type_int ~ gender + pub_before_cate + cohort + discipline_new + Jr_Quantile +
     most_ctr + colla_ctr_Y + author_cnt + max_coa_fncr_5y_log + firstauthor_top_100,
   exact_formula = ~ gender + cohort + discipline_new + Jr_Quantile + firstauthor_top_100

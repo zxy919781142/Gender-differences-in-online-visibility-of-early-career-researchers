@@ -12,20 +12,14 @@
 # Manuscript:
 #   Gender differences in online visibility of early-career researchers
 #
-# CHANGE FROM ORIGINAL: this script now reads the already-processed dataset
-# produced by 02_online_mentions_models_figure.R directly, rather than
-# re-deriving it from the raw file. 03 and 04 need the exact same derived
-# columns (len_tweet_ori, discipline_new, pub_before_cate, max_coa_fncr_5y_log,
-# author_cnt scaling, etc.), so running that derivation twice was pure
-# duplication; now it happens once, in 02, and both scripts (and
-# 04a_run_matching.R) share the one canonical output file.
 #
 # Required input file:
-#   2_result/dataset_demo_processed.csv
-#   (produced by 02_online_mentions_models_figure.R -- run that script first)
+#   data/1_dataset_demo.csv   (or your full author-level dataset with the same
+#   raw columns as in 02_online_mentions_models_figure.R). The data are
+#   processed here in exactly the same way as in 02_online_mentions_models_figure.R.
 #
 # Outputs:
-#   2_result/self_promotion_logistic_models.rds, coauthor_soc_promotion_models.rds
+#   result/self_promotion_logistic_models.rds, coauthor_soc_promotion_models.rds
 #
 #   figures/fig_3ab.pdf    tables/fig_3ab.csv   (panels a + b, column fig_panel)
 #   figures/fig_3c.pdf     tables/fig_3c.csv
@@ -34,7 +28,6 @@
 #   figures/fig_s14.pdf    tables/fig_s14.csv
 #   figures/fig_s15.pdf    tables/fig_s15.csv
 #   tables/table_s10.csv   (Table S10: self-promotion ORs, Models 0-10)
-#   tables/coauthor_soc_promotion_coefficients_OR.csv
 # -----------------------------------------------------------------------------
 
 # ---- 1. Setup ----------------------------------------------------------------
@@ -49,7 +42,8 @@ missing_packages <- required_packages[!required_packages %in% rownames(installed
 if (length(missing_packages) > 0) install.packages(missing_packages)
 invisible(lapply(required_packages, library, character.only = TRUE))
 
-result_dir <- "2_result"
+data_dir <- "data"
+result_dir <- "result"
 figure_dir <- "figures"   # every manuscript figure
 table_dir <- "tables"     # figure source data + supplementary tables
 model_dir <- result_dir   # intermediate files (fitted models)
@@ -58,19 +52,50 @@ dir.create(figure_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(table_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(model_dir, recursive = TRUE, showWarnings = FALSE)
 
-processed_file <- file.path(
-  result_dir,
-  "dataset_demo_processed.csv"
-)
+raw_file <- file.path(data_dir, "1_dataset_demo.csv")
 
-if (!file.exists(processed_file)) {
-  stop(
-    "Processed dataset not found. Run 03_online_mentions_models_figures.R first: ",
-    processed_file
-  )
+if (!file.exists(raw_file)) {
+  stop("Raw author-level dataset not found: ", raw_file)
 }
 
-# ---- 2. Helper functions -----------------------------------------------------
+# ---- 2a. Data preparation (identical to 02_online_mentions_models_figure.R) ---
+
+derive_processed_columns <- function(data) {
+  data %>%
+    mutate(
+      # Impute missing tweet counts to 0 before renaming.
+      len_tweet = ifelse(is.na(len_tweet), 0, len_tweet),
+      len_tweet_ori = len_tweet,
+
+      # Use the publication-level discipline as the analysis discipline.
+      discipline_new = discipline_new_pub,
+
+      # Bin raw prior-publication counts into 0 / 1 / 2+.
+      pub_before_cate = ifelse(pub_before == 0, "0", ifelse(pub_before > 1, "2+", "1")),
+
+      # Log(x + 1) transform of the raw co-author citation score.
+      max_coa_fncr_5y_log = log(max_coa_fncr_5y + 1),
+
+      # Standardize author_cnt (z-score) before modeling, keeping a raw copy.
+      # Scaling a continuous predictor is a linear reparametrization: it does
+      # NOT change fitted values/predictions (verified: max abs difference in
+      # predicted gender-specific mention counts was ~1e-5, i.e. floating-point
+      # noise), so it has no effect on the gender-comparison figures/AMEs. It
+      # DOES change the magnitude/interpretation of the reported coefficient
+      # (per-1-author vs. per-1-SD), so it matters for the exported
+      # coefficient/IRR table to match the original analysis.
+      author_cnt_ori = author_cnt,
+      author_cnt = as.numeric(scale(author_cnt))
+    ) %>%
+    mutate(
+      # Exclude likely bot-driven mentions: publications whose average
+      # tweets-per-tweeter exceeds 15 (see manuscript Methods).
+      average_tw = ifelse(is.na(len_tweet_ori / Original_Tweeters), 0, len_tweet_ori / Original_Tweeters)
+    ) %>%
+    filter(average_tw <= 15)
+}
+
+# ---- 2b. Helper functions ----------------------------------------------------
 
 set_reference <- function(x, ref) {
   x <- as.factor(x)
@@ -296,9 +321,10 @@ extract_model_coefficients <- function(models) {
   })
 }
 
-# ---- 3. Load already-processed data and fit models ---------------------------
+# ---- 3. Load data, derive columns, and fit models ----------------------------
 
-analysis_data <- readr::read_csv(processed_file, show_col_types = FALSE) %>%
+analysis_data <- readr::read_csv(raw_file, show_col_types = FALSE) %>%
+  derive_processed_columns() %>%
   prepare_analysis_data()
 
 models <- fit_or_load_models(
@@ -516,10 +542,6 @@ write_source_data(
   "fig_s15.csv"
 )
 
-readr::write_csv(
-  extract_model_coefficients(coauthor_soc_models),
-  file.path(table_dir, "coauthor_soc_promotion_coefficients_OR.csv")
-)
 
 # Shared plotting function: top row = Cohort / Previous Publications /
 # Journal Rank (three side-by-side facets); bottom row = Discipline (its own

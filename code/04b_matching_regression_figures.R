@@ -13,10 +13,11 @@
 #   This is Part 2 of a two-part pipeline; run 04a_run_matching.R first (or
 #   just make sure its output files already exist in DATA_DIR).
 #
-# Required input files (in 2_result/; the first two are produced by 04a_run_matching.R):
-#   2_result/2_match_psm_TW_No
-#   2_result/2_match_psm_self_other.csv
-#   2_result/2_match_psm_TW_No_basic_fncr_exNan_nov2024_1121_selfdiscipline_subclass.csv
+# Required input files (in result/; the first two are produced by 04a_run_matching.R):
+#   result/2_match_psm_TW_No
+#   result/2_match_psm_self_other.csv
+#   result/2_match_psm_TW_No_onemention.csv
+
 #
 # Outputs:
 #   figures/fig_4.pdf      tables/fig_4.csv   (panels a + b, column fig_panel)
@@ -27,7 +28,7 @@
 #   figures/fig_s21.pdf    tables/fig_s21.csv
 #   figures/fig_s22.pdf    tables/fig_s22.csv
 #   tables/model_matching*_*.csv   (cluster-robust regression tables)
-#   2_result/*.rds, 2_result/sessionInfo_matching_citation_analysis.txt
+
 ################################################################################
 
 # ---- 0. Setup -----------------------------------------------------------------
@@ -55,10 +56,10 @@ if (!has_ggpattern) {
 
 set.seed(2026)
 
-DATA_DIR <- "2_result"  # matched datasets from 04a_run_matching.R live here
+DATA_DIR <- "result"  # matched datasets from 04a_run_matching.R live here
 FIG_DIR <- "figures"    # every manuscript figure
 TAB_DIR <- "tables"     # figure source data + supplementary tables
-MOD_DIR <- "2_result"   # intermediate files (fitted models, session info)
+MOD_DIR <- "result"   # intermediate files (fitted models, session info)
 
 dir.create(FIG_DIR, recursive = TRUE, showWarnings = FALSE)
 dir.create(TAB_DIR, recursive = TRUE, showWarnings = FALSE)
@@ -524,7 +525,7 @@ ggsave(file.path(FIG_DIR, "fig_4.pdf"), fig4, width = 20, height = 10, limitsize
 # differs is the input matched dataset.
 
 matching1_onemention <- read_required_csv(
-  file.path(DATA_DIR, "2_match_psm_TW_No_basic_fncr_exNan_nov2024_1121_selfdiscipline_subclass.csv")
+  file.path(DATA_DIR, "2_match_psm_TW_No_onemention.csv")
 ) %>%
   prepare_matching_data() %>%
   mutate(Type = factor(Type, levels = c("NO", "withTW")))
@@ -619,6 +620,5 @@ ggsave(file.path(FIG_DIR, "fig_s22.pdf"), p_s22, width = 18, height = 12, limits
 
 # ---- 7. Session information ---------------------------------------------------
 
-writeLines(capture.output(sessionInfo()), file.path(MOD_DIR, "sessionInfo_matching_citation_analysis.txt"))
 
 message("Done. Figures in figures/, tables in tables/.")

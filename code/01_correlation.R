@@ -4,9 +4,9 @@
 # tables used for Fig. 1 and Supplementary Figs. S1-S7 in:
 #   Gender differences in online visibility of early-career researchers
 #
-# Input files should be placed in the Data/ folder:
-#   Data/01_corr.csv      country-by-cohort correlation input data
-#   Data/01_corr_agg.csv  country-level pooled 2012-2016 correlation input data
+# Input files should be placed in the data/ folder:
+#   data/01_corr.csv      country-by-cohort correlation input data
+#   data/01_corr_agg.csv  country-level pooled 2012-2016 correlation input data
 #
 
 # Outputs:
@@ -47,7 +47,7 @@ install_if_missing <- function(pkgs) {
 install_if_missing(required_packages)
 invisible(lapply(required_packages, library, character.only = TRUE))
 
-DATA_DIR <- "1_data"
+DATA_DIR <- "data"
 FIG_DIR <- "figures"   # every manuscript figure (PDF)
 TABLE_DIR <- "tables"  # every figure's source data + supplementary tables
 

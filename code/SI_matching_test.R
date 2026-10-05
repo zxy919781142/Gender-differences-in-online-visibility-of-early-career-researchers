@@ -1,63 +1,31 @@
 # -----------------------------------------------------------------------------
-# 4_RQ3_Matching_test_March2024.R (cleaned)
+# SI_matching_test.R
 #
 # Manuscript: Gender differences in online visibility of early-career researchers
 #
-# Purpose: second-stage refinement of the already-matched PSM datasets
-# produced by 04a_run_matching.R -- re-matches with additional exact-matching
-# criteria and produces country/covariate balance summaries restricted to the
-# top-20 countries.
+# Purpose:
+#   Produce the covariate-balance tables for the two propensity-score matchings
+#   (Supplementary Tables S12 and S13). The matched samples from
+#   04a_run_matching.R are re-matched with additional exact-matching criteria,
+#   and balance statistics (means in treatment and control groups, standardized
+#   mean differences, variance ratios, eCDF statistics) are summarised for the
+#   matching covariates, with country shown for the top-20 countries.
 #
 # Required input (from 04a_run_matching.R -- run that script first):
-#   2_result/2_match_psm_TW_No
-#   2_result/2_match_psm_self_other.csv
+#   result/2_match_psm_TW_No           (Matching 1: Twitter mentions vs. none)
+#   result/2_match_psm_self_other.csv  (Matching 2: self-promotion vs. others only)
 #
-# NOTE: this script's role in the manuscript is unclear to me -- the
-# filename includes "_test_", and it doesn't obviously correspond to any
-# figure/table we've identified so far (Figs. S16-S22, Tables S12-S13 are
-# already covered by 04a/04b). Please confirm what this script's output
-# (tables/table_s12.csv and tables/table_s13.csv = Supplementary Tables S12/S13,
-# plus tables/matching_test_1_TW_balance_tests.csv) is used for before
-# treating this as final -- see notes throughout for the specific ambiguities.
-#
-# CHANGES FROM THE ORIGINAL:
-#   - Trimmed the library list from 24 to the 2 actually used (tidyverse,
-#     MatchIt). The other 22 (sjPlot, lme4, betareg, DHARMa, etc.) were
-#     loaded but never referenced anywhere in this script -- likely
-#     copy-pasted from a larger master script. betareg was also loaded twice.
-#   - Fixed a formula typo: `cohort + + discipline` (double "+", from a
-#     deleted term) in all three matchit() calls. R silently tolerates this
-#     (parses as unary plus), so it wasn't a functional bug, just untidy --
-#     cleaned to `cohort + discipline_new`.
-#   - Replaced hardcoded Windows absolute paths with relative paths.
-#   - Removed `nt.out0` (matched without exact criteria): fit but never
-#     used downstream -- only `nt.out1`'s summary/plots/tests are used. If
-#     you want a with/without-exact-matching comparison, say so and I'll
-#     add it back deliberately rather than as an orphaned leftover.
-#   - `tw.variables.con` (continuous covariates to balance-test) was defined
-#     but never actually used -- the loop below only tested categorical
-#     variables via chi-square. Added a Wilcoxon rank-sum test for the
-#     continuous variable(s), matching the apparent original intent. If you
-#     intended something else here, let me know.
-#   - Renamed `ctr_top10` to `ctr_top20`, since it actually lists 20country
-#     codes, not 10 -- the old name was misleading.
-#   - Removed extensive commented-out dead code (old file paths, disabled
-#     `method`/`exact`/`distance` arguments) while keeping anything
-#     genuinely informative as an actual comment.
-#
-# ONE THING TO CONFIRM: the original commented-out file reads used
-# `mutate_all(na_if, "Null")` (converting literal "Null" strings to NA), but
-# this was dropped when the file paths were updated to the 2025 versions,
-# with no explanation. Is this intentional (the 2025 files no longer contain
-# "Null" strings), or should this be restored? I've left it out, matching
-# your most recent code, but flagging this explicitly since it changes which
-# rows get treated as missing.
+# Outputs:
+#   tables/table_s12.csv   (Table S12: balance test, Matching 1)
+#   tables/table_s13.csv   (Table S13: balance test, Matching 2)
+#   tables/matching_test_1_TW_balance_tests.csv
+#       (chi-square / Wilcoxon balance tests for Matching 1, printed below)
 # -----------------------------------------------------------------------------
 
 library(tidyverse)
 library(MatchIt)
 
-data_dir <- "2_result"  # 04a_run_matching.R's output lives here
+data_dir <- "result"  # 04a_run_matching.R's output lives here
 table_dir <- "tables"   # every table this script displays is also written here
 
 dir.create(table_dir, recursive = TRUE, showWarnings = FALSE)
@@ -67,14 +35,8 @@ data_processing_match <- function(data) {
   data$academic_age <- factor(data$academic_age)
   data$self_pro <- factor(data$self_pro)
 
-  # Standardize continuous covariates (not appropriate to leave unscaled
-  # for the matching-distance calculation). Not every input file has every
-  # column (e.g. data_psm_NT lacks len_tweet, since it's not used as a
-  # covariate for that comparison) -- only scale columns that are actually
-  # present, the same guard the original code already used for paper_3y.
-  # NOTE on a fix: tw_start_year/cum_tw_year were scaled here but never
-  # actually used anywhere else in this script (not in either matchit()
-  # formula, not in any balance test or summary) -- removed as dead work.
+  # Standardize continuous covariates for the matching-distance calculation
+  # (only those present in the input; e.g. Matching 1 has no len_tweet).
   candidate_scale_cols <- c("author_cnt", "len_tweet", "paper_3y")
   scale_cols <- candidate_scale_cols[candidate_scale_cols %in% colnames(data)]
   data[, scale_cols] <- scale(data[, scale_cols])
@@ -89,12 +51,8 @@ data_processing_match <- function(data) {
 
 # ---- 1. Load the (already-matched, upstream) PSM datasets --------------------
 #
-# NOTE on a fix: 04a_run_matching.R's own match.data() call already added
-# distance/weights/subclass columns from ITS matching stage. This script
-# re-matches on top of that (a second matchit() call), which would collide
-# with those leftover columns -- match.data() refuses to overwrite an
-# existing "distance" column. Drop the first stage's matching columns before
-# re-matching; they're specific to that earlier match, not this one.
+# The matched files from 04a_run_matching.R contain the distance/weights/
+# subclass columns of the first matching; they are dropped before re-matching.
 
 data_psm_NT <- read.csv(file.path(data_dir, "2_match_psm_TW_No")) %>%
   select(-any_of(c("distance", "weights", "subclass"))) %>%
@@ -155,10 +113,7 @@ for (i in tw.variables.cat) {
   cat("******************\n")
 }
 
-# NOTE on a fix: tw.variables.con was defined but never actually tested --
-# the loop above only covered categorical variables. Added the natural
-# continuous-variable equivalent (Wilcoxon rank-sum test) here; confirm
-# this matches your intent.
+# Wilcoxon rank-sum tests for the continuous covariates.
 for (i in tw.variables.con) {
   cat(i, "\n")
   test <- wilcox.test(data.nt[[i]] ~ data.nt$Type)
