@@ -14,7 +14,7 @@
 #   just make sure its output files already exist in DATA_DIR).
 #
 # Required input files (in result/; the first two are produced by 04a_run_matching.R):
-#   result/2_match_psm_TW_No
+#   result/2_match_psm_TW_No.csv
 #   result/2_match_psm_self_other.csv
 #   result/2_match_psm_TW_No_onemention.csv
 
@@ -72,6 +72,26 @@ read_required_csv <- function(path) {
     stop("Required input file not found: ", path)
   }
   readr::read_csv(path, show_col_types = FALSE)
+}
+
+# AME labels: two decimals; three for values that would otherwise round to 0.00
+format_ame_label <- function(x) {
+  ifelse(is.na(x), NA_character_,
+         ifelse(abs(x) < 0.005, sprintf("%.3f", x), sprintf("%.2f", x)))
+}
+
+# Discipline abbreviations used in the figures (defined in Table 1 of the
+# manuscript). Codes not listed here (e.g. cohorts, journal ranks) are kept.
+discipline_labels <- c(
+  Agri = "Agri", ChemE = "ChemEng", Elec = "ElecEng", Mater = "MatEng",
+  Mech = "MechEng", Other_eng = "OtherEng", Human = "Hum", Clinic = "ClinMed",
+  Health = "Health", Medi = "BasicMed", Bio = "Bio", ChemS = "Chem",
+  Com = "CompSci", Earth = "Earth", Math = "Math", Phys = "Phys",
+  Other_nat = "OtherNat", Econ = "Econ", Eco = "Econ", Edu = "Edu", Psy = "Psy",
+  Socio = "SocPol", Other_soc = "OtherSoc"
+)
+relabel_discipline <- function(x) {
+  ifelse(x %in% names(discipline_labels), unname(discipline_labels[x]), x)
 }
 
 relevel_if_present <- function(x, ref) {
@@ -188,7 +208,7 @@ compute_subgroup_ames <- function(model, data, treatment_value, control_value) {
       gender_label = recode(as.character(gender), "female" = "Female", "male" = "Male"),
       p_label = format_p(p_value),
       label_new = paste0(
-        "<span style='font-size:14pt'>", sprintf("%.2f", AME), "</span><br>",
+        "<span style='font-size:14pt'>", format_ame_label(AME), "</span><br>",
         "<span style='font-size:10pt'>", p_label, "</span>"
       ),
       label_colour = case_when(
@@ -242,7 +262,7 @@ make_overall_stacked_data <- function(model_list, data, treatment_value, control
         ymax = baseline_mean + AME_high,
         p_label = format_p(p_value),
         label_new = paste0(
-          "<span style='font-size:16pt'>", sprintf("%.2f", AME), "</span><br>",
+          "<span style='font-size:16pt'>", format_ame_label(AME), "</span><br>",
           "<span style='font-size:11pt'>", p_label, "</span>"
         ),
         label_colour = case_when(
@@ -351,7 +371,7 @@ plot_subgroup_ames <- function(df, model_title, y_label, discipline = FALSE, y_l
   plot_df <- df %>%
     filter(group != "Others", group != "Unk", group != "unknown") %>%
     mutate(
-      group = ifelse(group == "Econ", "Eco", group),
+      group = relabel_discipline(group),
       group_order = case_when(
         index == "cohort" ~ match(group, c("2012", "2013", "2014", "2015", "2016")),
         index == "pub_before_cate" ~ match(group, c("0", "1", "2+")),
@@ -418,13 +438,13 @@ subgroup_source_data <- function(without_df, with_df, discipline) {
     with_df %>% mutate(fig_panel = "b", model = "Full model includes co-author citations", .before = 1)
   ) %>%
     filter(group != "Others", group != "Unk", group != "unknown") %>%
-    mutate(group = ifelse(group == "Econ", "Eco", group)) %>%
+    mutate(group = relabel_discipline(group)) %>%
     filter(if (discipline) index_new == "Discipline" else index_new != "Discipline")
 }
 
 # ---- 2. Load matched datasets -------------------------------------------------
 
-matching1_twitter <- read_required_csv(file.path(DATA_DIR, "2_match_psm_TW_No")) %>%
+matching1_twitter <- read_required_csv(file.path(DATA_DIR, "2_match_psm_TW_No.csv")) %>%
   prepare_matching_data()
 
 matching2_self <- read_required_csv(file.path(DATA_DIR, "2_match_psm_self_other.csv")) %>%

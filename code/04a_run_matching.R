@@ -97,13 +97,7 @@ prepare_matching_data <- function(df) {
 
 run_match <- function(data, output_file, treatment_formula, exact_formula,
                        outcome_var = "fncr_5_years_early") {
-  # NOTE on a simplification: previously this function read a separate raw
-  # PSM-input file and left_join()'d it against main_aux (columns pulled from
-  # the main processed dataset), which could silently create suffixed
-  # duplicate columns if the raw file already had any of those columns. Now
-  # that both Matching 1 and Matching 2's inputs are derived directly from
-  # the one canonical processed dataset (see Section 3 below), there is no
-  # second file and no join -- this issue no longer applies.
+
   matched_data <- data %>%
     prepare_matching_data()
 
@@ -119,12 +113,7 @@ run_match <- function(data, output_file, treatment_formula, exact_formula,
 
   # ---- Post-matching cleaning: drop missing-outcome and outlier subclasses ----
   #
-  # Ported from the user's real matching-analysis notebook
-  # (4_Y_Match_Impact_analysis_June.ipynb, the "2025 version" cells), and
-  # matching the manuscript's own SI description ("...123,120 pairs after
-  # excluding the pairs of extreme outliers (top 1% of citation scores with
-  # extremely high citation scores)"). This was previously NOT implemented
-  # anywhere in the R pipeline -- a real gap, not just a style choice.
+ 
   #
   # Two exclusion steps, both applied at the SUBCLASS (matched-pair) level
   # -- i.e., if either member of a matched pair triggers exclusion, the
@@ -165,10 +154,7 @@ run_match <- function(data, output_file, treatment_formula, exact_formula,
   }
 
   readr::write_csv(matched, file.path(RESULT_DIR, output_file))
-  # NOTE on a fix: output_file sometimes already ends in ".csv" and sometimes
-  # doesn't (an inconsistency inherited from the original naming); strip any
-  # existing extension before adding "balance_...csv" so we never get a
-  # doubled ".csv.csv" suffix.
+
   balance_stem <- sub("\\.csv$", "", output_file)
   readr::write_csv(as.data.frame(summary(m_out)$sum.matched), file.path(TAB_DIR, paste0("balance_", balance_stem, ".csv")))
 
@@ -270,13 +256,7 @@ balance_source_data <- function(raw, matched) {
 # the mean five-year citations of all early-career researchers' first
 # publications in the same discipline and publication year.
 #
-# CHANGE: previously this read a separate raw citation file
-# (0_citation_processed_paper_newdiscipline.csv) and merged it onto the main
-# processed dataset by doi_lower. Since the raw ingredients
-# (cit_5_years, cit_3_years, discipline_average_5y_early,
-# discipline_average_3y_early) are now included directly in the main
-# processed dataset itself, no separate file or join is needed -- just the
-# final division.
+
 
 compute_dncs <- function(data) {
   data %>%
@@ -291,15 +271,7 @@ compute_dncs <- function(data) {
 
 # ---- 4. Derive matching inputs directly from the processed dataset ----------
 #
-# CHANGE: previously, Matching 1 and Matching 2's inputs were two separately
-# provided raw files (1_author_12_16_psm_TW_No.csv,
-# 1_author_12_16_psm_self_other.csv), each already containing a pre-built
-# Type_int treatment column, which then had to be joined against the main
-# processed dataset for the remaining covariates. Since both `with_tw` (did
-# this publication receive any Twitter mention?) and `self_pro` (did the
-# author self-promote it?) already exist as columns in the one canonical
-# processed dataset, both matching-input datasets can be built directly from
-# it instead -- removing the need for two separate raw files entirely.
+
 
 main_data <- read_required_csv(file.path(
   DATA_DIR,
@@ -310,10 +282,7 @@ main_data <- read_required_csv(file.path(
 # Matching 1: general Twitter mentions (with_tw == 1) vs. no mentions (with_tw == 0).
 matching1_input <- main_data %>%
   filter(author_cnt <= 15) %>%
-  # NOTE on a fix (carried over): MatchIt::matchit() requires complete cases
-  # for every covariate in the treatment formula. most_ctr is one of those
-  # covariates but is not guaranteed to be complete; without this filter,
-  # matchit() errors out entirely rather than just excluding affected rows.
+
   filter(!is.na(most_ctr), most_ctr != "") %>%
   mutate(
     Type_int = with_tw,

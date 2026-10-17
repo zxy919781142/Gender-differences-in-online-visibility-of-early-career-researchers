@@ -21,8 +21,8 @@
 # Outputs:
 #   result/online_mentions_zinb_models.rds
 #   result/dataset_demo_processed.csv
-#   figures/fig_2ab.pdf    tables/fig_2ab.csv   (panels a + b, column fig_panel)
-#   figures/fig_2c.pdf     tables/fig_2c.csv
+#   figures/fig_2.pdf      tables/fig_2ab.csv (panels a + b, column fig_panel),
+#                          tables/fig_2c.csv  (panel c)
 #   figures/fig_s10.pdf    tables/fig_s10.csv
 #   figures/fig_s11.pdf    tables/fig_s11.csv
 #   tables/table_s7.csv    (Table S7: zero-inflation ORs, Models 0-9)
@@ -101,27 +101,10 @@ set_reference <- function(x, ref) {
   if (ref %in% levels(x)) stats::relevel(x, ref = ref) else x
 }
 
-# NOTE on a fix: glmmTMB's `ziformula` should be a ONE-SIDED formula
-# (predictors of the zero-inflation probability only, e.g. `~ gender`).
-# The original code reused the same TWO-SIDED formula (`response ~ predictors`)
-# for both `formula` and `ziformula`. The model still fits without error in
-# that case, but `predict(..., newdata = ...)` later fails with
-# "number of variables != number of variable names", because glmmTMB's
-# internal reconstruction of the zero-inflation model.frame does not expect
-# a response variable there. This helper strips the response so `ziformula`
-# is safely one-sided.
+
 to_one_sided <- function(f) stats::formula(stats::delete.response(stats::terms(f)))
 
-# NOTE on a fix: some models (e.g. Model 0: `len_tweet_ori ~ gender`, with no
-# other predictors and no random effects) produce IDENTICAL predicted values
-# for every observation within the same gender -- there is nothing else in
-# the model to distinguish one researcher's prediction from another's. This
-# is expected/guaranteed by the model's structure, not a data quality issue.
-# `stats::t.test()` cannot compute a confidence interval for a vector with
-# zero variance and errors with "data are essentially constant". This safe
-# wrapper catches that case and falls back to a zero-width interval at the
-# point estimate (and p = NA, since a test of "is this different from the
-# comparison" is undefined when there is no variability to test).
+
 safe_t_test <- function(x, y = NULL) {
   tryCatch({
     if (is.null(y)) stats::t.test(x, alternative = "two.sided", conf.level = 0.95)
@@ -146,7 +129,23 @@ p_label <- function(p) {
 }
 
 format_ame_label <- function(x) {
-  ifelse(is.na(x), NA_character_, sprintf("%.2f", x))
+  # Two decimals; three for values that would otherwise round to 0.00
+  ifelse(is.na(x), NA_character_,
+         ifelse(abs(x) < 0.005, sprintf("%.3f", x), sprintf("%.2f", x)))
+}
+
+# Discipline abbreviations used in the figures (defined in Table 1).
+# Codes not listed here are shown unchanged.
+discipline_labels <- c(
+  Agri = "Agri", ChemE = "ChemEng", Elec = "ElecEng", Mater = "MatEng",
+  Mech = "MechEng", Other_eng = "OtherEng", Human = "Hum", Clinic = "ClinMed",
+  Health = "Health", Medi = "BasicMed", Bio = "Bio", ChemS = "Chem",
+  Com = "CompSci", Earth = "Earth", Math = "Math", Phys = "Phys",
+  Other_nat = "OtherNat", Econ = "Econ", Eco = "Econ", Edu = "Edu", Psy = "Psy",
+  Socio = "SocPol", Other_soc = "OtherSoc"
+)
+relabel_discipline <- function(x) {
+  ifelse(x %in% names(discipline_labels), discipline_labels[x], x)
 }
 
 make_label_data <- function(data, ame_col = "AME", p_col = "AME_p") {
@@ -186,6 +185,21 @@ prepare_analysis_data <- function(data) {
     )
 }
 
+# Fit a ZINB model with REML, as in the paper. On small samples such as the
+# demo data, sparse gender x subgroup cells can make the REML fit fail; the
+# model is then refitted by maximum likelihood so that the workflow can run.
+fit_zinb <- function(formula, ziformula, data) {
+  tryCatch(
+    glmmTMB::glmmTMB(formula = formula, ziformula = ziformula, data = data,
+                     family = glmmTMB::nbinom2, REML = TRUE),
+    error = function(e) {
+      message("  REML fit failed (", conditionMessage(e), "); refitting with REML = FALSE")
+      glmmTMB::glmmTMB(formula = formula, ziformula = ziformula, data = data,
+                       family = glmmTMB::nbinom2, REML = FALSE)
+    }
+  )
+}
+
 fit_or_load_models <- function(data, model_file) {
   if (file.exists(model_file)) {
     message("Loading cached ZINB models: ", model_file)
@@ -208,13 +222,7 @@ fit_or_load_models <- function(data, model_file) {
 
   models <- purrr::imap(forms, function(form, name) {
     message("Fitting ", name)
-    glmmTMB::glmmTMB(
-      formula = form,
-      ziformula = to_one_sided(form),
-      data = data,
-      family = glmmTMB::nbinom2,
-      REML = TRUE
-    )
+    fit_zinb(form, to_one_sided(form), data)
   })
 
   message("Fitting Model 9 with country-level random intercepts and random slopes for gender")
@@ -413,9 +421,9 @@ plot_theme <- theme_bw() +
 gender_cols <- c("Female" = "#E69F00", "Male" = "#56B4E9")
 
 p_fig2a <- ggplot(fig2a_data, aes(x = model_label, y = predict, colour = gender, fill = gender)) +
-  geom_col(position = position_dodge(width = 0.78), alpha = 0.8) +
-  geom_errorbar(aes(ymin = predict_low, ymax = predict_high), width = 0.3, linewidth = 1.2,
-                position = position_dodge(width = 0.78)) +
+  geom_col(position = position_dodge(width = 0.78), alpha = 0.45, linewidth = 0.8) +
+  geom_errorbar(aes(ymin = predict_low, ymax = predict_high, group = gender), width = 0.3, linewidth = 1.2,
+                colour = "grey15", position = position_dodge(width = 0.78)) +
   geom_richtext(aes(y = max(predict_high, na.rm = TRUE) * 1.15, label = label_new),
                 colour = fig2a_data$label_colour, fill = NA, label.color = NA,
                 fontface = 2, size = 6, lineheight = 0.9, show.legend = FALSE) +
@@ -426,9 +434,9 @@ p_fig2a <- ggplot(fig2a_data, aes(x = model_label, y = predict, colour = gender,
 
 p_fig2b <- ggplot(fig2b_data, aes(x = fct_inorder(group), y = predict, colour = gender, fill = gender)) +
   facet_wrap(~ factor(index_new, c("Cohort", "Previous Publications", "Journal Rank")), scales = "free_x") +
-  geom_col(position = position_dodge(width = 0.78), alpha = 0.8) +
-  geom_errorbar(aes(ymin = predict_low, ymax = predict_high), width = 0.3, linewidth = 1.2,
-                position = position_dodge(width = 0.78)) +
+  geom_col(position = position_dodge(width = 0.78), alpha = 0.45, linewidth = 0.8) +
+  geom_errorbar(aes(ymin = predict_low, ymax = predict_high, group = gender), width = 0.3, linewidth = 1.2,
+                colour = "grey15", position = position_dodge(width = 0.78)) +
   geom_richtext(aes(y = max(predict_high, na.rm = TRUE) * 1.15, label = label_new),
                 colour = fig2b_data$label_colour, fill = NA, label.color = NA,
                 fontface = 2, size = 5, lineheight = 0.9, show.legend = FALSE) +
@@ -438,14 +446,15 @@ p_fig2b <- ggplot(fig2b_data, aes(x = fct_inorder(group), y = predict, colour = 
   plot_theme
 
 p_fig2c <- ggplot(fig2c_data, aes(x = fct_inorder(group), y = predict, colour = gender, fill = gender)) +
-  geom_col(position = position_dodge(width = 0.78), alpha = 0.8) +
-  geom_errorbar(aes(ymin = predict_low, ymax = predict_high), width = 0.3, linewidth = 1.2,
-                position = position_dodge(width = 0.78)) +
+  geom_col(position = position_dodge(width = 0.78), alpha = 0.45, linewidth = 0.8) +
+  geom_errorbar(aes(ymin = predict_low, ymax = predict_high, group = gender), width = 0.3, linewidth = 1.2,
+                colour = "grey15", position = position_dodge(width = 0.78)) +
   geom_richtext(aes(y = max(predict_high, na.rm = TRUE) * 1.15, label = label_new),
                 colour = fig2c_data$label_colour, fill = NA, label.color = NA,
                 fontface = 2, size = 4.5, lineheight = 0.9, show.legend = FALSE) +
   scale_colour_manual(values = gender_cols, name = NULL) +
   scale_fill_manual(values = gender_cols, name = NULL) +
+  scale_x_discrete(labels = relabel_discipline) +
   labs(x = NULL, y = "Predicted count of Twitter mentions") +
   plot_theme +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -460,9 +469,9 @@ combined_fig2_ab <- cowplot::plot_grid(
 )
 
 p_s10 <- ggplot(model_predictions, aes(x = factor(model_number), y = predict, colour = gender, fill = gender)) +
-  geom_col(position = position_dodge(width = 0.78), alpha = 0.8) +
-  geom_errorbar(aes(ymin = predict_low, ymax = predict_high), width = 0.3, linewidth = 1.2,
-                position = position_dodge(width = 0.78)) +
+  geom_col(position = position_dodge(width = 0.78), alpha = 0.45, linewidth = 0.8) +
+  geom_errorbar(aes(ymin = predict_low, ymax = predict_high, group = gender), width = 0.3, linewidth = 1.2,
+                colour = "grey15", position = position_dodge(width = 0.78)) +
   geom_richtext(aes(y = max(predict_high, na.rm = TRUE) * 1.15, label = label_new),
                 colour = model_predictions$label_colour, fill = NA, label.color = NA,
                 fontface = 2, size = 5, lineheight = 0.9, show.legend = FALSE) +
@@ -472,9 +481,9 @@ p_s10 <- ggplot(model_predictions, aes(x = factor(model_number), y = predict, co
   plot_theme
 
 p_s11 <- ggplot(country_results, aes(x = factor(Country, levels = top20_countries), y = predict, colour = gender, fill = gender)) +
-  geom_col(position = position_dodge(width = 0.78), alpha = 0.8) +
-  geom_errorbar(aes(ymin = predict_low, ymax = predict_high), width = 0.3, linewidth = 1.2,
-                position = position_dodge(width = 0.78)) +
+  geom_col(position = position_dodge(width = 0.78), alpha = 0.45, linewidth = 0.8) +
+  geom_errorbar(aes(ymin = predict_low, ymax = predict_high, group = gender), width = 0.3, linewidth = 1.2,
+                colour = "grey15", position = position_dodge(width = 0.78)) +
   geom_richtext(aes(y = max(predict_high, na.rm = TRUE) * 1.15, label = label_new),
                 colour = country_results$label_colour, fill = NA, label.color = NA,
                 fontface = 2, size = 4, lineheight = 0.9, show.legend = FALSE) +
@@ -485,8 +494,13 @@ p_s11 <- ggplot(country_results, aes(x = factor(Country, levels = top20_countrie
 
 # ---- 8. Save figures ---------------------------------------------------------
 
-ggsave(file.path(figure_dir, "fig_2ab.pdf"), combined_fig2_ab, width = 28, height = 10, limitsize = FALSE)
-ggsave(file.path(figure_dir, "fig_2c.pdf"), p_fig2c, width = 28, height = 10, limitsize = FALSE)
+# Fig. 2: panels (a)-(c) combined in one file, as required by the journal
+fig2 <- cowplot::plot_grid(
+  combined_fig2_ab,
+  cowplot::plot_grid(p_fig2c, labels = "(c)", label_size = 20, label_fontface = "bold"),
+  ncol = 1
+)
+ggsave(file.path(figure_dir, "fig_2.pdf"), fig2, width = 28, height = 20, limitsize = FALSE)
 ggsave(file.path(figure_dir, "fig_s10.pdf"), p_s10, width = 18, height = 11, limitsize = FALSE)
 ggsave(file.path(figure_dir, "fig_s11.pdf"), p_s11, width = 21, height = 10, limitsize = FALSE)
 readr::write_csv(analysis_data, file.path(result_dir, "dataset_demo_processed.csv"))

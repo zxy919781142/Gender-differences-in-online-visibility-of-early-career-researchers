@@ -12,7 +12,7 @@
 #   matching covariates, with country shown for the top-20 countries.
 #
 # Required input (from 04a_run_matching.R -- run that script first):
-#   result/2_match_psm_TW_No           (Matching 1: Twitter mentions vs. none)
+#   result/2_match_psm_TW_No.csv         (Matching 1: Twitter mentions vs. none)
 #   result/2_match_psm_self_other.csv  (Matching 2: self-promotion vs. others only)
 #
 # Outputs:
@@ -41,7 +41,9 @@ data_processing_match <- function(data) {
   scale_cols <- candidate_scale_cols[candidate_scale_cols %in% colnames(data)]
   data[, scale_cols] <- scale(data[, scale_cols])
 
-  data$Jr_Quantile <- relevel(factor(data$Jr_Quantile), ref = "Q4")
+  data$Jr_Quantile <- factor(data$Jr_Quantile)
+  # Q4 may be absent in small samples (e.g. the demo data)
+  if ("Q4" %in% levels(data$Jr_Quantile)) data$Jr_Quantile <- relevel(data$Jr_Quantile, ref = "Q4")
   data$cohort <- relevel(factor(data$cohort), ref = "2012")
   data$colla_ctr_Y <- relevel(factor(data$colla_ctr_Y), ref = "N")
   data$colla_aff_Y <- relevel(factor(data$colla_aff_Y), ref = "N")
@@ -54,7 +56,7 @@ data_processing_match <- function(data) {
 # The matched files from 04a_run_matching.R contain the distance/weights/
 # subclass columns of the first matching; they are dropped before re-matching.
 
-data_psm_NT <- read.csv(file.path(data_dir, "2_match_psm_TW_No")) %>%
+data_psm_NT <- read.csv(file.path(data_dir, "2_match_psm_TW_No.csv")) %>%
   select(-any_of(c("distance", "weights", "subclass"))) %>%
   filter(author_cnt <= 15) %>%
   data_processing_match()
@@ -82,9 +84,12 @@ ctr_top20 <- c("chn", "usa", "gbr", "kor", "jpn", "ind", "bra", "deu", "can", "a
                "esp", "irn", "ita", "nld", "tur", "rus", "mys", "che", "swe")
 
 subset_summary <- match_summary$sum.matched[grepl(paste(substrings_to_match, collapse = "|"), rownames(match_summary$sum.matched)), ]
-subset_summary_ctr <- subset_summary[grepl(paste(ctr_top20, collapse = "|"), rownames(subset_summary)), ]
-subset_summary_ctr <- subset_summary_ctr[grepl("_ctr", rownames(subset_summary_ctr)), ]
-subset_summary_final <- rbind(subset_summary[!grepl("_ctr", rownames(subset_summary)), ], subset_summary_ctr)
+# Country rows: keep only the top-20 countries. Match on the full row name
+# ("most_ctr" + ISO3 code), so that other covariates containing "_ctr"
+# (e.g. colla_ctr_Y, international collaboration) are not dropped.
+is_country <- grepl("^most_ctr", rownames(subset_summary))
+subset_summary_ctr <- subset_summary[rownames(subset_summary) %in% paste0("most_ctr", ctr_top20), ]
+subset_summary_final <- rbind(subset_summary[!is_country, ], subset_summary_ctr)
 
 # Table S12: balance test for Matching 1 (top-20 countries shown)
 write.csv(subset_summary_final, file.path(table_dir, "table_s12.csv"))
@@ -144,9 +149,9 @@ substrings_to_match2 <- c("gender", "cohort", "discipline_new",
 match2_summary <- summary(m.out0)
 
 subset2_summary <- match2_summary$sum.matched[grepl(paste(substrings_to_match2, collapse = "|"), rownames(match2_summary$sum.matched)), ]
-subset2_summary_ctr <- subset2_summary[grepl(paste(ctr_top20, collapse = "|"), rownames(subset2_summary)), ]
-subset2_summary_ctr <- subset2_summary_ctr[grepl("_ctr", rownames(subset2_summary_ctr)), ]
-subset2_summary_final <- rbind(subset2_summary[!grepl("_ctr", rownames(subset2_summary)), ], subset2_summary_ctr)
+is_country2 <- grepl("^most_ctr", rownames(subset2_summary))
+subset2_summary_ctr <- subset2_summary[rownames(subset2_summary) %in% paste0("most_ctr", ctr_top20), ]
+subset2_summary_final <- rbind(subset2_summary[!is_country2, ], subset2_summary_ctr)
 
 # Table S13: balance test for Matching 2 (top-20 countries shown)
 write.csv(subset2_summary_final, file.path(table_dir, "table_s13.csv"))

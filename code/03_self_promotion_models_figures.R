@@ -21,8 +21,8 @@
 # Outputs:
 #   result/self_promotion_logistic_models.rds, coauthor_soc_promotion_models.rds
 #
-#   figures/fig_3ab.pdf    tables/fig_3ab.csv   (panels a + b, column fig_panel)
-#   figures/fig_3c.pdf     tables/fig_3c.csv
+#   figures/fig_3.pdf      tables/fig_3ab.csv (panels a + b, column fig_panel),
+#                          tables/fig_3c.csv  (panel c)
 #   figures/fig_s12.pdf    tables/fig_s12.csv
 #   figures/fig_s13.pdf    tables/fig_s13.csv
 #   figures/fig_s14.pdf    tables/fig_s14.csv
@@ -78,12 +78,7 @@ derive_processed_columns <- function(data) {
 
       # Standardize author_cnt (z-score) before modeling, keeping a raw copy.
       # Scaling a continuous predictor is a linear reparametrization: it does
-      # NOT change fitted values/predictions (verified: max abs difference in
-      # predicted gender-specific mention counts was ~1e-5, i.e. floating-point
-      # noise), so it has no effect on the gender-comparison figures/AMEs. It
-      # DOES change the magnitude/interpretation of the reported coefficient
-      # (per-1-author vs. per-1-SD), so it matters for the exported
-      # coefficient/IRR table to match the original analysis.
+      # NOT change fitted values/predictions.
       author_cnt_ori = author_cnt,
       author_cnt = as.numeric(scale(author_cnt))
     ) %>%
@@ -102,12 +97,7 @@ set_reference <- function(x, ref) {
   if (ref %in% levels(x)) stats::relevel(x, ref = ref) else x
 }
 
-# NOTE on a fix: some models (e.g. Model 0: `self_pro ~ gender`, with no
-# other predictors and no random effects) produce IDENTICAL predicted values
-# for every observation within the same gender. `stats::t.test()` cannot
-# compute a CI for a zero-variance vector and errors with "data are
-# essentially constant". This safe wrapper catches that case (see
-# 03_online_mentions_models_figures.R for the full explanation/verification).
+
 safe_t_test <- function(x, y = NULL) {
   tryCatch({
     if (is.null(y)) stats::t.test(x, alternative = "two.sided", conf.level = 0.95)
@@ -128,7 +118,23 @@ p_label <- function(p) {
 }
 
 format_ame_label <- function(x) {
-  ifelse(is.na(x), NA_character_, sprintf("%.2f", x))
+  # Two decimals; three for values that would otherwise round to 0.00
+  ifelse(is.na(x), NA_character_,
+         ifelse(abs(x) < 0.005, sprintf("%.3f", x), sprintf("%.2f", x)))
+}
+
+# Discipline abbreviations used in the figures (defined in Table 1).
+# Codes not listed here are shown unchanged.
+discipline_labels <- c(
+  Agri = "Agri", ChemE = "ChemEng", Elec = "ElecEng", Mater = "MatEng",
+  Mech = "MechEng", Other_eng = "OtherEng", Human = "Hum", Clinic = "ClinMed",
+  Health = "Health", Medi = "BasicMed", Bio = "Bio", ChemS = "Chem",
+  Com = "CompSci", Earth = "Earth", Math = "Math", Phys = "Phys",
+  Other_nat = "OtherNat", Econ = "Econ", Eco = "Econ", Edu = "Edu", Psy = "Psy",
+  Socio = "SocPol", Other_soc = "OtherSoc"
+)
+relabel_discipline <- function(x) {
+  ifelse(x %in% names(discipline_labels), discipline_labels[x], x)
 }
 
 make_label_data <- function(data, ame_col = "AME", p_col = "AME_p") {
@@ -441,6 +447,7 @@ p_fig3a <- ggplot(fig3a_data, aes(x = model_label, y = predict, colour = gender)
                 colour = fig3a_data$label_colour, fill = NA, label.color = NA,
                 fontface = 2, size = 6, lineheight = 0.9, show.legend = FALSE) +
   scale_colour_manual(values = gender_cols, name = NULL) +
+  scale_x_discrete(labels = function(x) sub(" Logistic ", "\nLogistic ", x)) +
   labs(x = NULL, y = "Predicted probability of self-promotion (p.p.)") +
   plot_theme
 
@@ -464,6 +471,7 @@ p_fig3c <- ggplot(fig3c_data, aes(x = fct_inorder(group), y = predict, colour = 
                 colour = fig3c_data$label_colour, fill = NA, label.color = NA,
                 fontface = 2, size = 4.5, lineheight = 0.9, show.legend = FALSE) +
   scale_colour_manual(values = gender_cols, name = NULL) +
+  scale_x_discrete(labels = relabel_discipline) +
   labs(x = NULL, y = "Predicted probability of self-promotion (p.p.)") +
   plot_theme +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -501,8 +509,13 @@ p_s13 <- ggplot(country_results, aes(x = factor(Country, levels = top20_countrie
 
 # ---- 7. Save figures ---------------------------------------------------------
 
-ggsave(file.path(figure_dir, "fig_3ab.pdf"), combined_fig3_ab, width = 28, height = 10, limitsize = FALSE)
-ggsave(file.path(figure_dir, "fig_3c.pdf"), p_fig3c, width = 28, height = 10, limitsize = FALSE)
+# Fig. 3: panels (a)-(c) combined in one file, as required by the journal
+fig3 <- cowplot::plot_grid(
+  combined_fig3_ab,
+  cowplot::plot_grid(p_fig3c, labels = "(c)", label_size = 20, label_fontface = "bold"),
+  ncol = 1
+)
+ggsave(file.path(figure_dir, "fig_3.pdf"), fig3, width = 28, height = 20, limitsize = FALSE)
 ggsave(file.path(figure_dir, "fig_s12.pdf"), p_s12, width = 21, height = 10, limitsize = FALSE)
 ggsave(file.path(figure_dir, "fig_s13.pdf"), p_s13, width = 21, height = 10, limitsize = FALSE)
 
@@ -571,6 +584,7 @@ plot_promotion_figure <- function(results_df, y_label) {
                   colour = bottom_data$label_colour, fill = NA, label.color = NA,
                   fontface = 2, size = 4.5, lineheight = 0.9, show.legend = FALSE) +
     scale_colour_manual(values = gender_cols, name = NULL) +
+    scale_x_discrete(labels = relabel_discipline) +
     labs(x = NULL, y = NULL) +
     plot_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "bottom")
