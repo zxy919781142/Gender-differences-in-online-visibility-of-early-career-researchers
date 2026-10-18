@@ -3,3 +3,4 @@ online_mentions_zinb_models.rds
 # Exclude large model files
 *.rds
 *.rds-chunking-*
+.ipynb_checkpoints/
