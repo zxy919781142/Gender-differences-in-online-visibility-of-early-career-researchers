@@ -6,8 +6,8 @@
 # Purpose:
 #   Produce the covariate-balance tables for the two propensity-score matchings
 #   (Supplementary Tables S12 and S13). The matched samples from
-#   04a_run_matching.R are re-matched with additional exact-matching criteria,
-#   and balance statistics (means in treatment and control groups, standardized
+#   04a_run_matching.R are re-matched (with academic age as a covariate), and
+#   balance statistics (means in treatment and control groups, standardized
 #   mean differences, variance ratios, eCDF statistics) are summarised for the
 #   matching covariates, with country shown for the top-20 countries.
 #
@@ -58,12 +58,12 @@ data_processing_match <- function(data) {
 
 data_psm_NT <- read.csv(file.path(data_dir, "2_match_psm_TW_No.csv")) %>%
   select(-any_of(c("distance", "weights", "subclass"))) %>%
-  filter(author_cnt <= 15) %>%
+  filter(author_cnt_ori <= 15) %>%
   data_processing_match()
 
 data_psm <- read.csv(file.path(data_dir, "2_match_psm_self_other.csv")) %>%
   select(-any_of(c("distance", "weights", "subclass"))) %>%
-  filter(author_cnt <= 15) %>%
+  filter(author_cnt_ori <= 15) %>%
   data_processing_match()
 
 # ---- 2. Re-match: general Twitter mentions vs. no mentions -------------------

@@ -10,14 +10,12 @@
 #     - Supplementary Figs. S17-S18, S21-S22
 #     - Supplementary Fig. S19 (exactly-one-mention robustness check)
 #
-#   This is Part 2 of a two-part pipeline; run 04a_run_matching.R first (or
-#   just make sure its output files already exist in DATA_DIR).
+#   Part 2 of a two-part pipeline; run 04a_run_matching.R first.
 #
-# Required input files (in result/; the first two are produced by 04a_run_matching.R):
+# Required input files (in result/; all produced by 04a_run_matching.R):
 #   result/2_match_psm_TW_No.csv
 #   result/2_match_psm_self_other.csv
 #   result/2_match_psm_TW_No_onemention.csv
-
 #
 # Outputs:
 #   figures/fig_4.pdf      tables/fig_4.csv   (panels a + b, column fig_panel)
@@ -28,7 +26,6 @@
 #   figures/fig_s21.pdf    tables/fig_s21.csv
 #   figures/fig_s22.pdf    tables/fig_s22.csv
 #   tables/model_matching*_*.csv   (cluster-robust regression tables)
-
 ################################################################################
 
 # ---- 0. Setup -----------------------------------------------------------------
@@ -59,7 +56,7 @@ set.seed(2026)
 DATA_DIR <- "result"  # matched datasets from 04a_run_matching.R live here
 FIG_DIR <- "figures"    # every manuscript figure
 TAB_DIR <- "tables"     # figure source data + supplementary tables
-MOD_DIR <- "result"   # intermediate files (fitted models, session info)
+MOD_DIR <- "result"   # intermediate files (fitted models)
 
 dir.create(FIG_DIR, recursive = TRUE, showWarnings = FALSE)
 dir.create(TAB_DIR, recursive = TRUE, showWarnings = FALSE)
@@ -100,6 +97,9 @@ relevel_if_present <- function(x, ref) {
 }
 
 prepare_matching_data <- function(df) {
+  if (!"max_coa_fncr_5y_log" %in% names(df)) {
+    df$max_coa_fncr_5y_log <- log(df$max_coa_fncr_5y + 1)
+  }
   df %>%
     mutate(
       gender = factor(gender, levels = c("female", "male")),
@@ -115,12 +115,7 @@ prepare_matching_data <- function(df) {
         TRUE ~ NA_character_
       ),
       pub_before_cate = factor(pub_before_cate, levels = c("0", "1", "2+")),
-      author_cnt = as.numeric(author_cnt),
-      max_coa_fncr_5y_log = ifelse(
-        "max_coa_fncr_5y_log" %in% names(.),
-        max_coa_fncr_5y_log,
-        log(max_coa_fncr_5y + 1)
-      )
+      author_cnt = as.numeric(author_cnt)
     )
 }
 
@@ -468,13 +463,8 @@ saveRDS(models_self, file.path(MOD_DIR, "matching2_self_promotion_lm_models.rds"
 # Cluster-robust coefficient tables, clustered by matched subclass when available.
 export_robust_table <- function(model, data, file_name) {
   if ("subclass" %in% names(data)) {
-    # NOTE on a fix: as.data.frame() has no proper method for "coeftest"
-    # objects, so it silently wraps the ENTIRE coefficient matrix as one
-    # list-column instead of spreading it into separate numeric columns --
-    # even the row names collapse to "1","2","3",... instead of the actual
-    # term names. This breaks write_csv() ("must not contain list or matrix
-    # columns"). Stripping the class with unclass() first forces a normal,
-    # correctly-structured conversion.
+    # unclass() converts the coeftest object to a plain matrix so that
+    # as.data.frame() keeps one column per statistic and the term names.
     raw_tab <- lmtest::coeftest(model, vcov. = sandwich::vcovCL, cluster = data$subclass)
     tab <- as.data.frame(unclass(raw_tab)) %>%
       rownames_to_column("term")
@@ -535,14 +525,9 @@ ggsave(file.path(FIG_DIR, "fig_4.pdf"), fig4, width = 20, height = 10, limitsize
 
 # ---- 5. Fig. S19: robustness check (exactly one Twitter mention) -------------
 #
-# Same 3-model comparison (baseline / full excluding co-author citations /
-# full including co-author citations) as Fig. 4a, but run on a separately
-# matched dataset that restricts the treatment group to researchers with
-# EXACTLY ONE Twitter mention (rather than one-or-more), matching Fig 4a's
-# treatment group against a control group with no mentions. This reuses
-# fit_matching_models(), make_overall_stacked_data(), and
-# plot_overall_stacked() exactly as used for Fig. 4a -- the only thing that
-# differs is the input matched dataset.
+# Same three models as Fig. 4a, fitted on a separately matched dataset in which
+# the treatment group is restricted to researchers whose first publication
+# received exactly one Twitter mention (control: no mentions).
 
 matching1_onemention <- read_required_csv(
   file.path(DATA_DIR, "2_match_psm_TW_No_onemention.csv")
@@ -637,8 +622,5 @@ p_s22b <- plot_subgroup_ames(self_subgroups_with, "(b) Full model includes co-au
 p_s22 <- p_s22a / p_s22b
 
 ggsave(file.path(FIG_DIR, "fig_s22.pdf"), p_s22, width = 18, height = 12, limitsize = FALSE)
-
-# ---- 7. Session information ---------------------------------------------------
-
 
 message("Done. Figures in figures/, tables in tables/.")

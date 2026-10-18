@@ -8,7 +8,6 @@
 #   data/3_corr.csv      country-by-cohort correlation input data
 #   data/3_corr_agg.csv  country-level pooled 2012-2016 correlation input data
 #
-
 # Outputs:
 #
 #   figures/                      tables/ (source data for each figure)
@@ -55,10 +54,8 @@ dir.create(FIG_DIR, showWarnings = FALSE, recursive = TRUE)
 dir.create(TABLE_DIR, showWarnings = FALSE, recursive = TRUE)
 
 # Input paths
-corr_file <- file.path(DATA_DIR, "03_corr.csv")
-corr_agg_file <- file.path(DATA_DIR, "03_corr_agg.csv")
-#threshold_f1_file <- file.path(DATA_DIR, "1_sample_2_testresult.csv")
-#threshold_gender_file <- file.path(DATA_DIR, "2_gender_ratio_threshold.csv")
+corr_file <- file.path(DATA_DIR, "3_corr.csv")
+corr_agg_file <- file.path(DATA_DIR, "3_corr_agg.csv")
 
 if (!file.exists(corr_file)) stop("Missing input file: ", corr_file)
 if (!file.exists(corr_agg_file)) stop("Missing input file: ", corr_agg_file)
@@ -117,10 +114,7 @@ add_derived_variables <- function(df) {
 pearson_stats <- function(data, x, y, group_var = NULL) {
   x <- rlang::ensym(x)
   y <- rlang::ensym(y)
-  # Capture group_var as a quosure WITHOUT forcing evaluation -- checking
-  # is.null(group_var) directly (before capturing it) would force R to
-  # evaluate a bare column name like `cohort` as a standalone object,
-  # raising "object 'cohort' not found" since it only exists as a column.
+  # group_var is passed as a bare column name, so it is captured as a quosure.
   group_var_quo <- rlang::enquo(group_var)
 
   compute_one <- function(df) {
@@ -227,16 +221,6 @@ get_medians <- function(data, x_var, y_var, group_var = NULL) {
   y_var <- rlang::ensym(y_var)
   group_var_quo <- rlang::enquo(group_var)
 
-  # NOTE on a fix: previously this was written as
-  #   if (...) { A } else { B } %>% mutate(...)
-  # which is a classic R parsing pitfall -- the pipe binds only to the
-  # `else` branch's expression, not to the whole if/else. That meant the
-  # ungrouped (pooled) branch silently returned without x_lab/y_lab ever
-  # being added, causing "object 'y_lab' not found" downstream in
-  # plot_ratio_correlation() for every *pooled* figure (Fig. 1a/1b,
-  # Figs. S2/S6), while the by-cohort figures (which take the `else`
-  # branch) worked fine. Assigning the if/else result to a variable first
-  # removes the ambiguity.
   medians <- if (rlang::quo_is_null(group_var_quo)) {
     data %>%
       summarise(
@@ -396,31 +380,6 @@ plot_gii_correlation <- function(
 
   if (facet) p <- p + facet_wrap(~ cohort, ncol = 3)
   p
-}
-
-plot_threshold_heatmap <- function(data, fill_var, title, fill_label, low_colour, high_colour, limits) {
-  fill_var <- rlang::ensym(fill_var)
-
-  data %>%
-    mutate(
-      general_threshold = round(general_threshold, 3),
-      chinese_threshold = round(chinese_threshold, 3)
-    ) %>%
-    ggplot(aes(x = as.factor(general_threshold), y = as.factor(chinese_threshold), fill = !!fill_var)) +
-    geom_tile(colour = "white") +
-    geom_text(aes(label = sprintf("%.3f", !!fill_var)), size = 5, colour = "black") +
-    scale_fill_gradient(low = low_colour, high = high_colour, limits = limits, name = fill_label) +
-    labs(title = title, x = "Threshold for non-Chinese names", y = "Threshold for Chinese names") +
-    theme_minimal(base_size = 18) +
-    theme(
-      plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
-      axis.title = element_text(size = 18),
-      axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
-      axis.text.y = element_text(size = 14),
-      legend.title = element_text(size = 16),
-      legend.text = element_text(size = 14),
-      panel.grid = element_blank()
-    )
 }
 
 # -----------------------------------------------------------------------------

@@ -50,8 +50,7 @@ f1_data <- readr::read_csv(f1_file, show_col_types = FALSE) %>%
 gender_data <- readr::read_csv(gender_file, show_col_types = FALSE) %>%
   mutate(across(c(general_threshold, chinese_threshold), ~ round(.x, 3)))
 
-# Identify the best-performing threshold pair (highest F1), reported in the
-# main text/response letter alongside the figure.
+# Best-performing threshold pair (highest F1), reported alongside Fig. S8.
 best_pair <- f1_data %>% slice_max(f1, n = 1)
 cat(
   "Best-performing threshold pair: general =", best_pair$general_threshold,

@@ -57,7 +57,7 @@ if (!file.exists(raw_file)) {
   stop("Raw author-level dataset not found: ", raw_file)
 }
 
-# ---- 2. Data preparation (integrated from 00_prepare_replication_data.R) ------
+# ---- 2. Data preparation -----------------------------------------------------
 
 derive_processed_columns <- function(data) {
   data %>%
@@ -75,14 +75,8 @@ derive_processed_columns <- function(data) {
       # Log(x + 1) transform of the raw co-author citation score.
       max_coa_fncr_5y_log = log(max_coa_fncr_5y + 1),
 
-      # Standardize author_cnt (z-score) before modeling, keeping a raw copy.
-      # Scaling a continuous predictor is a linear reparametrization: it does
-      # NOT change fitted values/predictions (verified: max abs difference in
-      # predicted gender-specific mention counts was ~1e-5, i.e. floating-point
-      # noise), so it has no effect on the gender-comparison figures/AMEs. It
-      # DOES change the magnitude/interpretation of the reported coefficient
-      # (per-1-author vs. per-1-SD), so it matters for the exported
-      # coefficient/IRR table to match the original analysis.
+      # Standardize author_cnt (z-score) before modeling, keeping a raw copy
+      # (author_cnt_ori). Coefficients are therefore per 1 SD of team size.
       author_cnt_ori = author_cnt,
       author_cnt = as.numeric(scale(author_cnt))
     ) %>%
@@ -113,10 +107,6 @@ safe_t_test <- function(x, y = NULL) {
     m <- if (is.null(y)) mean(x, na.rm = TRUE) else mean(x, na.rm = TRUE) - mean(y, na.rm = TRUE)
     list(p.value = NA_real_, conf.int = c(m, m), estimate = m)
   })
-}
-
-safe_scale <- function(x) {
-  if (is.numeric(x)) as.numeric(scale(x)) else x
 }
 
 p_label <- function(p) {

@@ -76,9 +76,8 @@ derive_processed_columns <- function(data) {
       # Log(x + 1) transform of the raw co-author citation score.
       max_coa_fncr_5y_log = log(max_coa_fncr_5y + 1),
 
-      # Standardize author_cnt (z-score) before modeling, keeping a raw copy.
-      # Scaling a continuous predictor is a linear reparametrization: it does
-      # NOT change fitted values/predictions.
+      # Standardize author_cnt (z-score) before modeling, keeping a raw copy
+      # (author_cnt_ori). Coefficients are therefore per 1 SD of team size.
       author_cnt_ori = author_cnt,
       author_cnt = as.numeric(scale(author_cnt))
     ) %>%
@@ -223,11 +222,9 @@ fit_or_load_models <- function(data, model_file) {
 }
 
 fit_or_load_coauthor_soc_models <- function(data, model_file) {
-  # Fits the two additional models needed for Figs. S14 (promotion by
-  # co-authors) and S15 (promotion by official/institutional Twitter
-  # accounts). These are separate from the Models 0-10 self-promotion
-  # sequence above -- different outcome variables, different (unlogged)
-  # co-author citation covariate, matching the exact specification provided.
+  # Models for Figs. S14 (promotion by co-authors) and S15 (promotion by
+  # official/institutional Twitter accounts). Separate from the self-promotion
+  # Models 0-10: different outcomes and the unlogged co-author citation score.
   if (file.exists(model_file)) {
     message("Loading cached co-author/institutional promotion models: ", model_file)
     return(readRDS(model_file))
@@ -557,8 +554,7 @@ write_source_data(
 
 
 # Shared plotting function: top row = Cohort / Previous Publications /
-# Journal Rank (three side-by-side facets); bottom row = Discipline (its own
-# wider facet), matching the original Figs. S14/S15 layout.
+# Journal Rank; bottom row = Discipline.
 plot_promotion_figure <- function(results_df, y_label) {
   top_data <- results_df %>% filter(index_new != "Discipline")
   bottom_data <- results_df %>% filter(index_new == "Discipline", group != "unknown")

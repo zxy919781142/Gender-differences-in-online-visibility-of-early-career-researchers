@@ -8,12 +8,9 @@
 #   comparisons used in the citation-impact analyses, and produce the
 #   matching-diagnostic outputs (balance tables + density plots).
 #
-#   This is Part 1 of a two-part pipeline, split out of the original combined
-#   05_matching_citation_analysis.R:
-#     04a_run_matching.R              (this script) -- raw data -> matched data
-#     04b_matching_regression_figures.R -- matched data -> models -> Fig. 4 etc.
-#   Splitting these means the (slow, one-off) matching step doesn't need to be
-#   re-run every time you tweak the regression/plotting code.
+#   Part 1 of a two-part pipeline:
+#     04a_run_matching.R                 processed data -> matched data
+#     04b_matching_regression_figures.R  matched data -> models -> Fig. 4 etc.
 #
 # Required input file:
 #   result/dataset_demo_processed.csv
@@ -21,7 +18,6 @@
 #   Must include: cit_5_years, cit_3_years, discipline_average_5y_early,
 #   discipline_average_3y_early (used to compute the DNCS5 citation outcome,
 #   fncr_5_years_early -- see Section 3 below).
-#
 #
 # Outputs:
 #   result/2_match_psm_TW_No.csv              (matched data, Matching 1)
@@ -71,6 +67,9 @@ relevel_if_present <- function(x, ref) {
 }
 
 prepare_matching_data <- function(df) {
+  if (!"max_coa_fncr_5y_log" %in% names(df)) {
+    df$max_coa_fncr_5y_log <- log(df$max_coa_fncr_5y + 1)
+  }
   df %>%
     mutate(
       gender = factor(gender, levels = c("female", "male")),
@@ -86,12 +85,7 @@ prepare_matching_data <- function(df) {
         TRUE ~ NA_character_
       ),
       pub_before_cate = factor(pub_before_cate, levels = c("0", "1", "2+")),
-      author_cnt = as.numeric(author_cnt),
-      max_coa_fncr_5y_log = ifelse(
-        "max_coa_fncr_5y_log" %in% names(.),
-        max_coa_fncr_5y_log,
-        log(max_coa_fncr_5y + 1)
-      )
+      author_cnt = as.numeric(author_cnt)
     )
 }
 
@@ -112,9 +106,6 @@ run_match <- function(data, output_file, treatment_formula, exact_formula,
   matched <- MatchIt::match.data(m_out)
 
   # ---- Post-matching cleaning: drop missing-outcome and outlier subclasses ----
-  #
- 
-  #
   # Two exclusion steps, both applied at the SUBCLASS (matched-pair) level
   # -- i.e., if either member of a matched pair triggers exclusion, the
   # WHOLE pair is dropped, not just that one row:
@@ -252,26 +243,22 @@ balance_source_data <- function(raw, matched) {
 
 # ---- 3. Compute the citation outcome (DNCS5 / fncr_5_years_early) -----------
 #
-# Matches the manuscript's DNCS5 definition: five-year citations divided by
-# the mean five-year citations of all early-career researchers' first
-# publications in the same discipline and publication year.
-#
-
+# DNCS5: five-year citations divided by the mean five-year citations of all
+# early-career researchers' first publications in the same discipline and
+# publication year.
 
 compute_dncs <- function(data) {
   data %>%
     mutate(
       fncr_5_years_early = cit_5_years / discipline_average_5y_early,
-      # A publication with zero citations should have DNCS = 0 exactly,
-      # regardless of the discipline-year average (avoids any division
-      # artifacts and matches the original notebook's explicit override).
+      # Publications with zero citations have DNCS = 0.
       fncr_5_years_early = ifelse(cit_5_years == 0, 0, fncr_5_years_early)
     )
 }
 
-# ---- 4. Derive matching inputs directly from the processed dataset ----------
-#
-
+# ---- 4. Derive matching inputs from the processed dataset --------------------
+# author_cnt is standardized in 02_online_mentions_models_figure.R, so the
+# team-size restriction (<= 15 authors) uses the raw count, author_cnt_ori.
 
 main_data <- read_required_csv(file.path(
   DATA_DIR,
@@ -281,8 +268,7 @@ main_data <- read_required_csv(file.path(
 
 # Matching 1: general Twitter mentions (with_tw == 1) vs. no mentions (with_tw == 0).
 matching1_input <- main_data %>%
-  filter(author_cnt <= 15) %>%
-
+  filter(author_cnt_ori <= 15) %>%
   filter(!is.na(most_ctr), most_ctr != "") %>%
   mutate(
     Type_int = with_tw,
@@ -303,7 +289,7 @@ matching1_onemention_input <- matching1_input %>%
 # meaningful comparison among researchers who were mentioned at all.
 matching2_input <- main_data %>%
   filter(with_tw == 1) %>%
-  filter(author_cnt <= 15) %>%
+  filter(author_cnt_ori <= 15) %>%
   filter(!is.na(most_ctr), most_ctr != "") %>%
   mutate(
     Type_int = self_pro,
