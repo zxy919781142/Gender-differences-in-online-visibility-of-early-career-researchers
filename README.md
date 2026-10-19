@@ -16,7 +16,7 @@ all main and supplementary figures and tables.
 **ORCID:** 0000-0002-2552-7795  
 **Affiliations:** Max Planck Institute for Demographic Research; Leverhulme Centre for Demographic Science, Department of Sociology, University of Oxford  
 **Website:** https://www.demogr.mpg.de/en/about_us_6113/staff_directory_1899/xinyi_zhao_4083/  
-**Email:** zhao@demogr.mpg.de; xinyi.zhao@st-hughs.ox.ac.uk
+**Email:** zhao@demogr.mpg.de; zhao@mpib-berlin.mpg.de
 
 ---
 
